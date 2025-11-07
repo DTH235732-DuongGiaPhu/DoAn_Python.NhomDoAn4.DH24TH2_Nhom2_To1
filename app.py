@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 # Import hàm kết nối từ file riêng
+# Giả định file connection_manager và database đã tồn tại và hoạt động
 from connection_manager import getDbConnection
 # Import DatabaseManager
 from database import DatabaseManager
@@ -197,8 +198,10 @@ class SearchWindow:
         book_info = self.db.get_book_by_id(db_id)
         
         if book_info:
-            # fill_form_with_data sẽ tự động select item trong bảng chính
-            self.main_app.fill_form_with_data(book_info) 
+            # fill_form_with_data CHỈ ĐIỀN FORM (update_selection=False)
+            self.main_app.fill_form_with_data(book_info, update_selection=False) 
+            # Dùng hàm mới để chọn lại dòng, tránh xung đột
+            self.main_app.select_row_by_id(db_id) 
         
         self.master.destroy()
 
@@ -360,7 +363,44 @@ class BookManagerApp:
         self.books_list.bind('<<TreeviewSelect>>', self.get_selected_row) 
 
     # --- LOGIC XỬ LÝ FORM VÀ CSDL ---
+    
+    def select_row_by_id(self, db_id_to_select):
+        """
+        Hàm phụ trợ tìm và chọn một dòng dựa trên ID CSDL.
+        Sử dụng after(1) để đảm bảo Tkinter xử lý sự kiện một cách an toàn.
+        """
+        # Hủy liên kết sự kiện để tránh gọi lại fill_form_with_data khi set selection
+        self.books_list.unbind('<<TreeviewSelect>>')
+        
+        # Xóa lựa chọn cũ
+        self.books_list.selection_remove(self.books_list.selection())
+
+        item_found = None
+        for item in self.books_list.get_children():
+            # values[0] là ID (hidden column)
+            if str(self.books_list.item(item, 'values')[0]) == str(db_id_to_select):
+                item_found = item
+                break
+        
+        # Tạo hàm local để chọn và re-bind
+        def final_select_and_rebind():
+            if item_found:
+                self.books_list.selection_set(item_found)
+                self.books_list.focus(item_found)
+                self.books_list.see(item_found)
+                    
+            # Liên kết lại sự kiện sau khi hoàn thành
+            self.books_list.bind('<<TreeviewSelect>>', self.get_selected_row)
+        
+        # Gọi hàm local trong vòng lặp tiếp theo của Tkinter
+        self.master.after(1, final_select_and_rebind)
+    
     def fill_form_with_data(self, book_info, update_selection=True):
+        """
+        Điền dữ liệu sách vào form.
+        Lưu ý: Logic chọn lại dòng (update_selection=True) đã được chuyển sang hàm select_row_by_id
+        để tránh lỗi đệ quy/xung đột sự kiện.
+        """
         self.clear_form()
         # Lưu lại toàn bộ tuple dữ liệu (ID DB là book_info[0])
         self.selected_book = book_info 
@@ -389,40 +429,6 @@ class BookManagerApp:
         self.cover_price_text.set(str(book_info[8]) if book_info[8] is not None else "0.0")
         self.reprint_text.set(str(book_info[9]) if book_info[9] is not None else "0")
         self.publish_year_text.set(clean_str(book_info[10]))
-        
-        
-        # === PHẦN CHỌN LẠI DÒNG TRÊN TREEVIEW (Dùng cho Tìm kiếm/Cập nhật) ===
-        if update_selection:
-            db_id_to_select = str(book_info[0])
-            
-            # <FIX TẠI ĐÂY>: Dùng after(0, ...) để tránh xung đột sự kiện ngay lập tức
-            # Hủy liên kết sự kiện để tránh gọi lại fill_form_with_data khi set selection
-            self.books_list.unbind('<<TreeviewSelect>>')
-            
-            # Tìm item cần chọn
-            item_found = None
-            for item in self.books_list.get_children():
-                # values[0] là ID (hidden column)
-                if str(self.books_list.item(item, 'values')[0]) == db_id_to_select:
-                    item_found = item
-                    break
-            
-            # Tạo hàm local để chọn và re-bind
-            def select_and_rebind():
-                # 2. Xóa lựa chọn cũ
-                self.books_list.selection_remove(self.books_list.selection())
-                
-                if item_found:
-                    self.books_list.selection_set(item_found)
-                    self.books_list.focus(item_found)
-                    self.books_list.see(item_found)
-                        
-                # 4. Liên kết lại sự kiện sau khi hoàn thành
-                self.books_list.bind('<<TreeviewSelect>>', self.get_selected_row)
-            
-            # Gọi hàm local trong vòng lặp tiếp theo của Tkinter
-            self.master.after(10, select_and_rebind)
-
 
     def clear_form(self):
         self.book_id_text.set("")
@@ -458,7 +464,7 @@ class BookManagerApp:
         values = self.books_list.item(item_id, 'values')
         
         # values là tuple đầy đủ (ID DB, MaSach, TenSach,...)
-        # update_selection=False vì nó đã được chọn, tránh đệ quy
+        # update_selection=False vì nó đã được chọn, không cần phải chọn lại
         self.fill_form_with_data(values, update_selection=False) 
 
     def view_command(self):
@@ -546,11 +552,10 @@ class BookManagerApp:
         try:
             self.db.update_book_full(book_db_id, *values)
             self.view_command()
-            # Sau khi cập nhật, fill_form_with_data sẽ được gọi lại với update_selection=True
-            # để đảm bảo dòng vừa cập nhật được chọn lại.
-            updated_book_info = self.db.get_book_by_id(book_db_id)
-            if updated_book_info:
-                 self.fill_form_with_data(updated_book_info, update_selection=True) 
+            
+            # GỌI HÀM MỚI để chọn lại dòng VỪA CẬP NHẬT
+            self.select_row_by_id(book_db_id)
+            
             messagebox.showinfo("Thành công", f"Đã cập nhật sách ID: {book_db_id}")
         except Exception as e:
             messagebox.showerror("Lỗi CSDL", f"Lỗi khi cập nhật sách: {e}")
