@@ -269,7 +269,7 @@ class BookManagerApp:
         top_frame.grid_columnconfigure(0, weight=3)
         top_frame.grid_columnconfigure(1, weight=1)
 
-        # A. Khu vực Input (10 trường) - ĐÃ CẬP NHẬT LĨNH VỰC LÀ ENTRY
+        # A. Khu vực Input (10 trường)
         input_frame = ttk.Frame(top_frame, padding="5 5 5 5", relief=tk.GROOVE, borderwidth=1)
         input_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=5)
 
@@ -280,7 +280,7 @@ class BookManagerApp:
             ("MÃ SÁCH:", self.book_id_text, "entry"),
             ("TÊN SÁCH:", self.book_name_text, "entry"),
             ("TÁC GIẢ:", self.author_text, "entry"),     
-            ("LĨNH VỰC:", self.field_text, "entry"),       # ĐÃ CHUYỂN THÀNH ENTRY
+            ("LĨNH VỰC:", self.field_text, "entry"),       
             ("LOẠI SÁCH:", self.book_type_text, "combo", self.BOOK_TYPES),
             ("TÊN NXB:", self.publisher_name_text, "entry"),    
             ("GIÁ MUA:", self.buy_price_text, "spinbox", 0, 1000000),
@@ -356,8 +356,7 @@ class BookManagerApp:
         vsb.grid(row=0, column=1, sticky='ns')
         self.books_list.configure(yscrollcommand=vsb.set)
 
-        # Đổi bind từ <Button-1> sang <<TreeviewSelect>> để tránh lỗi lặp lại (click vào khoảng trắng)
-        # Sử dụng get_selected_row (hàm này đã được tối ưu)
+        # RÀNG BUỘC CHÍNH XÁC: Chỉ dùng <<TreeviewSelect>> để lấy dữ liệu.
         self.books_list.bind('<<TreeviewSelect>>', self.get_selected_row) 
 
     # --- LOGIC XỬ LÝ FORM VÀ CSDL ---
@@ -381,7 +380,7 @@ class BookManagerApp:
         
         # Xử lý ComboBox Loại Sách
         type_val = clean_str(book_info[5])
-        self.book_type_text.set(type_val if type_val in self.BOOK_TYPES else self.BOOK_TYPES[0])
+        self.book_type_text.set(type_val if type_val in self.BOOK_TYPES else (self.BOOK_TYPES[0] if self.BOOK_TYPES else ""))
         
         self.publisher_name_text.set(clean_str(book_info[6]))
 
@@ -396,21 +395,34 @@ class BookManagerApp:
         if update_selection:
             db_id_to_select = str(book_info[0])
             
+            # <FIX TẠI ĐÂY>: Dùng after(0, ...) để tránh xung đột sự kiện ngay lập tức
             # Hủy liên kết sự kiện để tránh gọi lại fill_form_with_data khi set selection
             self.books_list.unbind('<<TreeviewSelect>>')
             
-            self.books_list.selection_remove(self.books_list.selection())
-
+            # Tìm item cần chọn
+            item_found = None
             for item in self.books_list.get_children():
                 # values[0] là ID (hidden column)
                 if str(self.books_list.item(item, 'values')[0]) == db_id_to_select:
-                    self.books_list.selection_set(item)
-                    self.books_list.focus(item)
-                    self.books_list.see(item)
+                    item_found = item
                     break
-                    
-            # Liên kết lại sự kiện sau khi hoàn thành
-            self.books_list.bind('<<TreeviewSelect>>', self.get_selected_row)
+            
+            # Tạo hàm local để chọn và re-bind
+            def select_and_rebind():
+                # 2. Xóa lựa chọn cũ
+                self.books_list.selection_remove(self.books_list.selection())
+                
+                if item_found:
+                    self.books_list.selection_set(item_found)
+                    self.books_list.focus(item_found)
+                    self.books_list.see(item_found)
+                        
+                # 4. Liên kết lại sự kiện sau khi hoàn thành
+                self.books_list.bind('<<TreeviewSelect>>', self.get_selected_row)
+            
+            # Gọi hàm local trong vòng lặp tiếp theo của Tkinter
+            self.master.after(10, select_and_rebind)
+
 
     def clear_form(self):
         self.book_id_text.set("")
@@ -428,6 +440,7 @@ class BookManagerApp:
         self.publish_year_text.set("")
 
         self.selected_book = None
+        # Chỉ xóa lựa chọn nếu có
         if self.books_list.selection():
             self.books_list.selection_remove(self.books_list.selection())
             
@@ -436,7 +449,7 @@ class BookManagerApp:
         # Lấy item được chọn
         selected_items = self.books_list.selection()
         
-        # Nếu không có item nào được chọn (ví dụ: click vào khoảng trống)
+        # Nếu không có item nào được chọn (có thể do click vào vùng trống sau khi đã chọn)
         if not selected_items:
             self.clear_form()
             return
@@ -445,7 +458,8 @@ class BookManagerApp:
         values = self.books_list.item(item_id, 'values')
         
         # values là tuple đầy đủ (ID DB, MaSach, TenSach,...)
-        self.fill_form_with_data(values, update_selection=False) # update_selection=False để tránh đệ quy
+        # update_selection=False vì nó đã được chọn, tránh đệ quy
+        self.fill_form_with_data(values, update_selection=False) 
 
     def view_command(self):
         self.clear_form()
@@ -473,12 +487,12 @@ class BookManagerApp:
         
     def validate_input(self, values):
         """
-        Kiểm tra các trường bắt buộc (để khắc phục lỗi NULL) và các trường số.
+        Kiểm tra các trường bắt buộc (khắc phục lỗi NULL) và các trường số.
         Thứ tự values: (MaSach, TenSach, TacGiaName, LinhVucName, LoaiSach, NXBName, GiaMua, GiaBia, LanTaiBan, NamXB)
         Index:          (0,       1,       2,           3,           4,        5,       6,       7,       8,           9)
         """
         
-        # Kiểm tra các trường văn bản quan trọng không được rỗng (khắc phục lỗi NULL)
+        # Kiểm tra các trường văn bản quan trọng không được rỗng
         required_text_fields = {
             0: "Mã Sách", 
             1: "Tên Sách", 
@@ -498,25 +512,26 @@ class BookManagerApp:
             float(values[6])
             float(values[7])
             int(values[8])
-            # Kiểm tra Năm XB là số nguyên (Nếu không có, nó là chuỗi rỗng và sẽ bị bắt ở trên)
+            # Kiểm tra Năm XB là số nguyên (Nếu có giá trị)
             if values[9]:
-                int(values[9]) 
+                # Đảm bảo năm là số nguyên 4 chữ số hợp lệ
+                if not (values[9].isdigit() and len(values[9]) == 4):
+                     messagebox.showerror("Lỗi Dữ Liệu", "Năm Xuất Bản phải là số nguyên 4 chữ số hợp lệ.")
+                     return False
             return True
         except ValueError:
-            messagebox.showerror("Lỗi Dữ Liệu", "Giá Mua, Giá Bìa, Lần Tái Bản, hoặc Năm XB phải là số hợp lệ.")
+            messagebox.showerror("Lỗi Dữ Liệu", "Giá Mua, Giá Bìa, Lần Tái Bản phải là số hợp lệ.")
             return False
 
     def add_command(self):
         values = self.get_all_input_values()
         if not self.validate_input(values): return
         
-        # *values bung ra 10 tham số: MaSach, TenSach, TacGiaName, LinhVucName, LoaiSach, NXBName, GiaMua, GiaBia, LanTaiBan, NamXB
         try:
             self.db.insert_book_full(*values)
             self.view_command()
             messagebox.showinfo("Thành công", f"Đã thêm sách: {values[1]}")
         except Exception as e:
-            # Lỗi UNIQUE KEY constraint sẽ được bắt ở đây
             messagebox.showerror("Lỗi CSDL", f"Lỗi khi thêm sách: {e}")
             
     def update_command(self):
@@ -529,9 +544,13 @@ class BookManagerApp:
         if not self.validate_input(values): return
         
         try:
-            # Cấu trúc: (db_id, MaSach, TenSach, TacGiaName, LinhVucName, LoaiSach, NXBName, GiaMua, GiaBia, LanTaiBan, NamXB)
             self.db.update_book_full(book_db_id, *values)
             self.view_command()
+            # Sau khi cập nhật, fill_form_with_data sẽ được gọi lại với update_selection=True
+            # để đảm bảo dòng vừa cập nhật được chọn lại.
+            updated_book_info = self.db.get_book_by_id(book_db_id)
+            if updated_book_info:
+                 self.fill_form_with_data(updated_book_info, update_selection=True) 
             messagebox.showinfo("Thành công", f"Đã cập nhật sách ID: {book_db_id}")
         except Exception as e:
             messagebox.showerror("Lỗi CSDL", f"Lỗi khi cập nhật sách: {e}")
