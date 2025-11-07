@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 # Import hàm kết nối từ file riêng
 from connection_manager import getDbConnection
-# Import DatabaseManager
+# Import DatabaseManager (Giả định class DatabaseManager đã được định nghĩa trong database.py)
 from database import DatabaseManager
 
 
@@ -117,7 +117,7 @@ class LoginWindow:
                     pass
             self.master.quit()
 
-# --- CLASS CỬA SỔ TÌM KIẾM CÓ GỢI Ý ---
+# --- CLASS CỬA SỔ TÌM KIẾM CÓ GỢI Ý (ĐÃ SỬA) ---
 class SearchWindow:
     def __init__(self, master, main_app_instance):
         self.master = master
@@ -154,6 +154,7 @@ class SearchWindow:
         self.results_tree.heading("Title", text="Tên Sách")
         self.results_tree.heading("Author", text="Tác Giả")
         
+        # Sửa event để kích hoạt chọn khi nhấp chuột
         self.results_tree.bind('<<TreeviewSelect>>', self.select_suggestion)
 
         self.results_tree.pack(pady=10, fill='both', expand=True)
@@ -169,28 +170,40 @@ class SearchWindow:
         if not query:
             return
 
-        # Dữ liệu trả về: (Id, MaSach, TenSach, TenTacGia)
+        # Dữ liệu trả về: (Id, MaSach, TenSach, TenTacGia) - Giả định từ database.py
         results = self.db.search_for_suggestion(query)
 
         for row in results[:10]:
-            db_id = row[0]
+            db_id = row[0] # Lấy ID CSDL
             book_id = row[1]
             title = row[2]  
             author = row[3]  
             
+            # Lưu db_id vào tags
             self.results_tree.insert('', tk.END, values=(book_id, title, author), tags=(db_id,))
 
+    # *** PHẦN ĐÃ SỬA để lấy ID CSDL và tải dữ liệu lên form chính ***
     def select_suggestion(self, event):
         selected_items = self.results_tree.selection()
         if not selected_items:
             return
             
         item_id = selected_items[0]
-        db_id = self.results_tree.item(item_id, 'tags')[0]
         
+        try:
+            # Lấy db_id từ 'tags' đã được lưu (là phần tử đầu tiên của tags tuple)
+            db_id = self.results_tree.item(item_id, 'tags')[0]
+        except IndexError:
+            # Trường hợp không có tag (không nên xảy ra)
+            return
+        
+        # Hàm get_book_by_id phải trả về đầy đủ 11 trường thông tin sách 
+        # (Id, MaSach, TenSach, TenTacGia, TenLinhVuc, LoaiSach, TenNXB, GiaMua, GiaBia, LanTaiBan, NamXB)
         book_info = self.db.get_book_by_id(db_id)
         
         if book_info:
+            # Tải dữ liệu lên form chính
+            # fill_form_with_data sẽ tự động chọn hàng tương ứng trong Treeview chính
             self.main_app.fill_form_with_data(book_info)
         
         self.master.destroy()
@@ -218,7 +231,6 @@ class BookManagerApp:
         self.reprint_text = tk.StringVar(value="0")
         self.publish_year_text = tk.StringVar()
 
-        # KHÔNG KHAI BÁO self.FIELDS NỮA (Lĩnh vực là Entry)
         self.BOOK_TYPES = ["Sách Nước Ngoài", "Sách Trong Nước"]
 
         self.master.grid_columnconfigure(0, weight=1)
@@ -272,10 +284,10 @@ class BookManagerApp:
         input_data = [
             ("MÃ SÁCH:", self.book_id_text, "entry"),
             ("TÊN SÁCH:", self.book_name_text, "entry"),
-            ("TÁC GIẢ:", self.author_text, "entry"),          
-            ("LĨNH VỰC:", self.field_text, "entry"),          # ĐÃ CHUYỂN THÀNH ENTRY
+            ("TÁC GIẢ:", self.author_text, "entry"),
+            ("LĨNH VỰC:", self.field_text, "entry"), # ĐÃ CHUYỂN THÀNH ENTRY
             ("LOẠI SÁCH:", self.book_type_text, "combo", self.BOOK_TYPES),
-            ("TÊN NXB:", self.publisher_name_text, "entry"),    
+            ("TÊN NXB:", self.publisher_name_text, "entry"), 
             ("GIÁ MUA:", self.buy_price_text, "spinbox", 0, 1000000),
             ("GIÁ BÌA:", self.cover_price_text, "spinbox", 0, 1000000),
             ("LẦN TÁI BẢN:", self.reprint_text, "spinbox", 0, 100),
@@ -312,7 +324,7 @@ class BookManagerApp:
             ("🔍 Tìm Kiếm", self.search_command, "Search.TButton"),
             ("📚 Xem Tất Cả", self.view_command, "Small.TButton"),
             ("🧹 Xóa Form", self.clear_form, "Small.TButton"),
-            ("🚪 Thoát", self.login_window.logout_and_show_login, "Small.TButton")
+            ("🚪 Đăng Xuất", self.login_window.logout_and_show_login, "Small.TButton")
         ]
 
         for i, (text, command, style_name) in enumerate(buttons_info):
@@ -331,6 +343,7 @@ class BookManagerApp:
         self.books_list = ttk.Treeview(list_frame, columns=all_column_ids, show='headings', style="Treeview")
         self.books_list.grid(row=0, column=0, sticky="nsew")
         
+        # Ẩn cột ID CSDL
         self.books_list.column("ID", width=0, minwidth=0, stretch=tk.NO)
         self.books_list.heading("ID", text="")
         
@@ -359,7 +372,8 @@ class BookManagerApp:
         # Hàm hỗ trợ làm sạch chuỗi
         def clean_str(val):
             if val is not None:
-                return str(val).strip().strip("'")
+                # Xóa khoảng trắng và ký tự nháy đơn (nếu có, do lỗi hiển thị từ DB)
+                return str(val).strip().strip("'") 
             return ""
 
         # Dữ liệu chuỗi: ID DB (0), Mã Sách (1), Tên Sách (2), Tác Giả (3), Lĩnh Vực (4), Loại Sách (5), Tên NXB (6)
@@ -388,28 +402,33 @@ class BookManagerApp:
             db_id_to_select = str(book_info[0])
             
             # 1. Hủy liên kết sự kiện trước khi thiết lập lại lựa chọn
+            self.books_list.unbind('<Button-1>')
             self.books_list.unbind('<<TreeviewSelect>>')
             
             # 2. Xóa và tìm hàng để chọn lại (cần cho chức năng TÌM KIẾM/CẬP NHẬT)
             self.books_list.selection_remove(self.books_list.selection())
 
+            found_item = None
             for item in self.books_list.get_children():
-                # values[0] là ID (hidden column)
+                # values[0] là ID CSDL (hidden column)
                 if str(self.books_list.item(item, 'values')[0]) == db_id_to_select:
-                    self.books_list.selection_set(item)
-                    self.books_list.focus(item)
-                    self.books_list.see(item)
+                    found_item = item
                     break
                     
+            if found_item:
+                self.books_list.selection_set(found_item)
+                self.books_list.focus(found_item)
+                self.books_list.see(found_item)
+                    
             # 3. Liên kết lại sự kiện sau khi hoàn thành
-            self.books_list.bind('<<TreeviewSelect>>', self.get_selected_row)
+            self.books_list.bind('<Button-1>', self.get_selected_row)
 
     def clear_form(self):
         self.book_id_text.set("")
         self.book_name_text.set("")
         self.author_text.set("")
         
-        self.field_text.set("") # LĨNH VỰC - ĐÃ BỎ self.FIELDS
+        self.field_text.set("") 
         if self.BOOK_TYPES:
             self.book_type_text.set(self.BOOK_TYPES[0])
 
@@ -445,11 +464,9 @@ class BookManagerApp:
         # 4. Lấy dữ liệu và tải lên form
         values = self.books_list.item(selected_item, 'values')
         
-        # Ngăn chặn đệ quy
+        # Ngăn chặn đệ quy (vì đang trong quá trình chọn)
         self.fill_form_with_data(values, update_selection=False)
         
-        # (Bạn có thể xóa các dòng print kiểm tra nếu mọi thứ đã hoạt động)
-        # print(f"✅ Đã tải dữ liệu của mục ID DB: {values[0]}")
 
     def view_command(self):
         self.clear_form()
@@ -457,6 +474,7 @@ class BookManagerApp:
             self.books_list.delete(item)
             
         try:
+            # view_all phải trả về tuple (Id, MaSach, TenSach, TenTacGia, TenLinhVuc, LoaiSach, TenNXB, GiaMua, GiaBia, LanTaiBan, NamXB)
             for row in self.db.view_all():
                 self.books_list.insert('', tk.END, values=row)
         except Exception as e:
@@ -479,7 +497,10 @@ class BookManagerApp:
         try:
             float(values[6])
             float(values[7])
-            int(values[8])
+            # Kiểm tra Lần Tái Bản có phải là số nguyên không
+            reprint_val = values[8].strip()
+            if reprint_val:
+                 int(reprint_val)
             return True
         except ValueError:
             messagebox.showerror("Lỗi Dữ Liệu", "Giá Mua, Giá Bìa, Lần Tái Bản phải là số hợp lệ.")
@@ -500,7 +521,7 @@ class BookManagerApp:
         if not self.selected_book:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn một sách để cập nhật.")
             return
-        book_db_id = self.selected_book[0]
+        book_db_id = self.selected_book[0] # ID CSDL
         values = self.get_all_input_values()
         if not self.validate_input(values): return
         try:
@@ -515,7 +536,7 @@ class BookManagerApp:
         if not self.selected_book:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn một sách để xóa.")
             return
-        book_id = self.selected_book[0]
+        book_id = self.selected_book[0] # ID CSDL
         book_title = self.selected_book[2]
 
         if messagebox.askyesno("Xác nhận Xóa", f"Bạn có chắc chắn muốn xóa sách:\n'{book_title}' (ID: {book_id})?"):
