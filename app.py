@@ -1,4 +1,4 @@
-# app.py (Đã tối ưu hóa cho mô hình CSDL 4 bảng chuẩn hóa và sửa lỗi hiển thị form)
+# app.py 
 
 import tkinter as tk
 from tkinter import ttk, messagebox
