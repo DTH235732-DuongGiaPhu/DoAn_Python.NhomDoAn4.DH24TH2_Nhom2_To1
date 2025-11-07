@@ -1,11 +1,9 @@
-# app.py 
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 # Import hàm kết nối từ file riêng
-from connection_manager import getDbConnection 
+from connection_manager import getDbConnection
 # Import DatabaseManager
-from database import DatabaseManager 
+from database import DatabaseManager
 
 
 # --- HÀM HỖ TRỢ CƠ BẢN ---
@@ -22,7 +20,7 @@ class LoginWindow:
     def __init__(self, master, main_app_class):
         self.master = master
         self.master.title("Đăng Nhập Hệ Thống Quản Lý")
-        self.master.protocol("WM_DELETE_WINDOW", self.on_closing) 
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         self.WIDTH = 450
         self.HEIGHT = 220
@@ -38,12 +36,12 @@ class LoginWindow:
         style = ttk.Style()
         style.theme_use("clam")
         style.configure("TLabel", font=('Arial', 12, 'bold'))
-        style.configure("TEntry", font=('Arial', 12)) 
-        style.configure("Login.TButton", font=('Arial', 13, 'bold'), padding=8, background="#4CAF50", foreground="white") 
+        style.configure("TEntry", font=('Arial', 12))
+        style.configure("Login.TButton", font=('Arial', 13, 'bold'), padding=8, background="#4CAF50", foreground="white")
 
         main_frame = ttk.Frame(self.master, padding="25 20 25 20")
         main_frame.pack(expand=True, fill='both')
-        main_frame.grid_columnconfigure(1, weight=1) 
+        main_frame.grid_columnconfigure(1, weight=1)
 
         ttk.Label(main_frame, text="👤 Tên tài khoản:").grid(row=0, column=0, sticky="w", padx=10, pady=8)
         ttk.Entry(main_frame, textvariable=self.username_var, width=30).grid(row=0, column=1, padx=10, pady=8, sticky='ew')
@@ -64,7 +62,7 @@ class LoginWindow:
             db_conn = getDbConnection()
             if db_conn is None:
                 messagebox.showerror("Lỗi CSDL", "Không thể kết nối đến cơ sở dữ liệu. Vui lòng kiểm tra Driver/Server/Tên CSDL.")
-                return 
+                return
             
             self.master.withdraw()
 
@@ -73,7 +71,7 @@ class LoginWindow:
                 self.main_window.protocol("WM_DELETE_WINDOW", self.logout_and_quit)
 
                 # TRUYỀN ĐỐI TƯỢNG KẾT NỐI (db_conn) VÀO BookManagerApp
-                self.main_app_instance = self.main_app_class(self.main_window, self, db_conn) 
+                self.main_app_instance = self.main_app_class(self.main_window, self, db_conn)
 
                 self.main_window.state('zoomed')
                 center_window(self.main_window, 950, 650)
@@ -144,7 +142,7 @@ class SearchWindow:
         search_entry = ttk.Entry(main_frame, textvariable=self.search_text, width=70, font=('Arial', 12))
         search_entry.pack(pady=5, fill='x')
         
-        self.search_text.trace_add("write", self.update_suggestions) 
+        self.search_text.trace_add("write", self.update_suggestions)
         
         self.results_tree = ttk.Treeview(main_frame, columns=("BookID", "Title", "Author"), show='headings', height=10)
         
@@ -172,15 +170,15 @@ class SearchWindow:
             return
 
         # Dữ liệu trả về: (Id, MaSach, TenSach, TenTacGia)
-        results = self.db.search_for_suggestion(query) 
+        results = self.db.search_for_suggestion(query)
 
         for row in results[:10]:
             db_id = row[0]
-            book_id = row[1] 
+            book_id = row[1]
             title = row[2]  
-            author = row[3]  
+            author = row[3] 
             
-            self.results_tree.insert('', tk.END, values=(book_id, title, author), tags=(db_id,)) 
+            self.results_tree.insert('', tk.END, values=(book_id, title, author), tags=(db_id,))
 
     def select_suggestion(self, event):
         selected_items = self.results_tree.selection()
@@ -190,7 +188,7 @@ class SearchWindow:
         item_id = selected_items[0]
         db_id = self.results_tree.item(item_id, 'tags')[0]
         
-        book_info = self.db.get_book_by_id(db_id) 
+        book_info = self.db.get_book_by_id(db_id)
         
         if book_info:
             self.main_app.fill_form_with_data(book_info)
@@ -200,11 +198,11 @@ class SearchWindow:
 
 # --- CLASS ỨNG DỤNG CHÍNH (QUẢN LÝ SÁCH) ---
 class BookManagerApp:
-    def __init__(self, master, login_window_instance, db_conn): 
+    def __init__(self, master, login_window_instance, db_conn):
         # TRUYỀN KẾT NỐI VÀO DATABASE MANAGER
-        self.db = DatabaseManager(db_conn) 
+        self.db = DatabaseManager(db_conn)
         self.master = master
-        self.login_window = login_window_instance 
+        self.login_window = login_window_instance
         master.title("📚 Hệ Thống Quản Lý Sách Chuyên Nghiệp")
         
         self.apply_styles()
@@ -235,12 +233,12 @@ class BookManagerApp:
         style.theme_use("clam")
 
         style.configure("Treeview.Heading", font=('Arial', 10, 'bold'), background="#4CAF50", foreground="white")
-        style.configure("Treeview", 
-            font=('Arial', 10), 
+        style.configure("Treeview",
+            font=('Arial', 10),
             rowheight=25,
             # Cấu hình để có đường kẻ ngang và dọc như table
-            bordercolor="#B0B0B0", 
-            borderwidth=1, 
+            bordercolor="#B0B0B0",
+            borderwidth=1,
             relief="solid",
             fieldbackground="white" # Màu nền trắng giúp đường kẻ nổi bật
         )
@@ -262,7 +260,7 @@ class BookManagerApp:
         top_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
 
         top_frame.grid_columnconfigure(0, weight=3)
-        top_frame.grid_columnconfigure(1, weight=1) 
+        top_frame.grid_columnconfigure(1, weight=1)
 
         # A. Khu vực Input (10 trường) - ĐÃ CẬP NHẬT LĨNH VỰC LÀ ENTRY
         input_frame = ttk.Frame(top_frame, padding="5 5 5 5", relief=tk.GROOVE, borderwidth=1)
@@ -274,8 +272,8 @@ class BookManagerApp:
         input_data = [
             ("MÃ SÁCH:", self.book_id_text, "entry"),
             ("TÊN SÁCH:", self.book_name_text, "entry"),
-            ("TÁC GIẢ:", self.author_text, "entry"),          
-            ("LĨNH VỰC:", self.field_text, "entry"),          # ĐÃ CHUYỂN THÀNH ENTRY
+            ("TÁC GIẢ:", self.author_text, "entry"),       
+            ("LĨNH VỰC:", self.field_text, "entry"),        # ĐÃ CHUYỂN THÀNH ENTRY
             ("LOẠI SÁCH:", self.book_type_text, "combo", self.BOOK_TYPES),
             ("TÊN NXB:", self.publisher_name_text, "entry"),    
             ("GIÁ MUA:", self.buy_price_text, "spinbox", 0, 1000000),
@@ -303,7 +301,7 @@ class BookManagerApp:
                 from_val, to_val = data[3], data[4]
                 ttk.Spinbox(input_frame, textvariable=var, from_=from_val, to=to_val, wrap=True, font=('Arial', 11)).grid(row=row, column=widget_col, padx=5, pady=5, sticky='ew')
                 
-        # B. Khu vực Buttons 
+        # B. Khu vực Buttons
         button_frame = ttk.Frame(top_frame, padding="5 5 5 5")
         button_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=5)
 
@@ -311,7 +309,7 @@ class BookManagerApp:
             ("➕ Thêm Sách", self.add_command, "Add.TButton"),
             ("🔄 Cập Nhật", self.update_command, "Update.TButton"),
             ("❌ Xóa Sách", self.delete_command, "Delete.TButton"),
-            ("🔍 Tìm Kiếm", self.search_command, "Search.TButton"), 
+            ("🔍 Tìm Kiếm", self.search_command, "Search.TButton"),
             ("📚 Xem Tất Cả", self.view_command, "Small.TButton"),
             ("🧹 Xóa Form", self.clear_form, "Small.TButton"),
             ("🚪 Thoát", self.login_window.logout_and_show_login, "Small.TButton")
@@ -320,7 +318,7 @@ class BookManagerApp:
         for i, (text, command, style_name) in enumerate(buttons_info):
             ttk.Button(button_frame, text=text, command=command, style=style_name).grid(row=i, column=0, padx=5, pady=4, sticky='ew')
 
-        button_frame.grid_columnconfigure(0, weight=1) 
+        button_frame.grid_columnconfigure(0, weight=1)
         
         # 2. Bảng hiển thị (Treeview)
         list_frame = ttk.Frame(self.master, padding="10 10 10 10")
@@ -354,7 +352,7 @@ class BookManagerApp:
         self.books_list.bind('<Button-1>', self.get_selected_row)
 
     # --- LOGIC XỬ LÝ FORM VÀ CSDL ---
-    def fill_form_with_data(self, book_info, update_selection=True): 
+    def fill_form_with_data(self, book_info, update_selection=True):
         self.clear_form()
         self.selected_book = book_info
 
@@ -370,9 +368,9 @@ class BookManagerApp:
         self.author_text.set(clean_str(book_info[3]))
         
         # Xử lý Lĩnh Vực (Entry)
-        self.field_text.set(clean_str(book_info[4])) 
+        self.field_text.set(clean_str(book_info[4]))
         
-        # Xử lý ComboBox Loại Sách 
+        # Xử lý ComboBox Loại Sách
         type_val = clean_str(book_info[5])
         self.book_type_text.set(type_val if type_val in self.BOOK_TYPES else self.BOOK_TYPES[0])
         
@@ -390,15 +388,15 @@ class BookManagerApp:
             db_id_to_select = str(book_info[0])
             
             # 1. Hủy liên kết sự kiện trước khi thiết lập lại lựa chọn
-            self.books_list.unbind('<<TreeviewSelect>>') 
+            self.books_list.unbind('<<TreeviewSelect>>')
             
             # 2. Xóa và tìm hàng để chọn lại (cần cho chức năng TÌM KIẾM/CẬP NHẬT)
             self.books_list.selection_remove(self.books_list.selection())
 
             for item in self.books_list.get_children():
                 # values[0] là ID (hidden column)
-                if str(self.books_list.item(item, 'values')[0]) == db_id_to_select: 
-                    self.books_list.selection_set(item) 
+                if str(self.books_list.item(item, 'values')[0]) == db_id_to_select:
+                    self.books_list.selection_set(item)
                     self.books_list.focus(item)
                     self.books_list.see(item)
                     break
@@ -445,7 +443,7 @@ class BookManagerApp:
         self.books_list.focus(selected_item) # Bắt buộc focus để highlight
         
         # 4. Lấy dữ liệu và tải lên form
-        values = self.books_list.item(selected_item, 'values') 
+        values = self.books_list.item(selected_item, 'values')
         
         # Ngăn chặn đệ quy
         self.fill_form_with_data(values, update_selection=False)
@@ -459,7 +457,8 @@ class BookManagerApp:
             self.books_list.delete(item)
             
         try:
-            for row in self.db.view_all(): 
+            for row in self.db.view_all():
+                # Dòng này đưa dữ liệu (bao gồm cả ID DB) vào Treeview
                 self.books_list.insert('', tk.END, values=row)
         except Exception as e:
             messagebox.showerror("Lỗi CSDL", f"Không thể tải dữ liệu: {e}")
@@ -473,11 +472,15 @@ class BookManagerApp:
         )
         
     def validate_input(self, values):
-        # Yêu cầu MaSach, TenSach, TenTacGia (values[0], values[1], values[2])
-        if not values[0] or not values[1] or not values[2]:
-            messagebox.showerror("Lỗi", "Vui lòng điền tối thiểu Mã Sách, Tên Sách, và Tác Giả.")
+        # values[0]=MaSach, values[1]=TenSach, values[2]=TacGiaName, values[3]=LinhVucName, values[5]=NXBName
+        
+        # Yêu cầu kiểm tra các trường bắt buộc (0, 1, 2, 3, 5)
+        # Đã sửa lỗi logic: Bắt buộc nhập Tác Giả, Lĩnh Vực và Tên NXB để dữ liệu hiển thị đúng
+        if not values[0] or not values[1] or not values[2] or not values[3] or not values[5]:
+            messagebox.showerror("Lỗi", "Vui lòng điền tối thiểu Mã Sách, Tên Sách, Tác Giả, Lĩnh Vực, và Tên NXB.")
             return False
-        # Dữ liệu số
+            
+        # Dữ liệu số (values[6]=GiaMua, values[7]=GiaBia, values[8]=LanTaiBan)
         try:
             float(values[6])
             float(values[7])
@@ -535,5 +538,5 @@ class BookManagerApp:
 # --- KHỞI CHẠY ỨNG DỤNG ---
 if __name__ == '__main__':
     root = tk.Tk()
-    login_app = LoginWindow(root, BookManagerApp) 
+    login_app = LoginWindow(root, BookManagerApp)
     root.mainloop()
