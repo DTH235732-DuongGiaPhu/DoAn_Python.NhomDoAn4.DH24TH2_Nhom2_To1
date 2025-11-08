@@ -1,9 +1,53 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-# Import hàm kết nối từ file riêng
-from connection_manager import getDbConnection
-# Import DatabaseManager (Giả định class DatabaseManager đã được định nghĩa trong database.py)
-from database import DatabaseManager
+from tkinter.constants import NO, W, E, N, S 
+import time
+
+# --- MOCKUP HÀM VÀ LỚP (GIẢ ĐỊNH) ĐỂ CODE CHẠY ĐỘC LẬP ---
+def getDbConnection():
+    """Mock function for DB connection."""
+    class MockConnection:
+        def close(self): pass
+    return MockConnection()
+
+class DatabaseManager:
+    # ... (Giữ nguyên phần Mockup) ...
+    def __init__(self, conn):
+        self.conn = conn
+        # Dữ liệu mẫu (Id, MaSach, TenSach, TenTacGia, TenLinhVuc, LoaiSach, TenNXB, GiaMua, GiaBia, LanTaiBan, NamXB)
+        self.mock_data = [
+            (1, 'MS001', 'Nhà Giả Kim', 'Paulo Coelho', 'Tâm Lý', 'Sách Nước Ngoài', 'NXB Văn Học', 80.0, 100.0, 5, '1988'),
+            (2, 'MS002', 'Đắc Nhân Tâm', 'Dale Carnegie', 'Kỹ Năng Sống', 'Sách Nước Ngoài', 'NXB Trẻ', 95.5, 120.0, 10, '1936'),
+            (3, 'MS003', 'Toán Cao Cấp A1', 'Nhiều Tác Giả', 'Giáo Trình', 'Sách Trong Nước', 'NXB Giáo Dục', 120.0, 150.0, 1, '2023'),
+            (4, 'MS004', 'Lập Trình Python Cơ Bản', 'Nguyễn Văn A', 'CNTT', 'Sách Trong Nước', 'NXB Khoa Học', 250.0, 300.0, 2, '2022'),
+        ]
+        
+    def view_all(self):
+        time.sleep(0.1) 
+        return self.mock_data
+        
+    def search_for_suggestion(self, query):
+        q = query.lower()
+        results = [row for row in self.mock_data if q in str(row[1]).lower() or q in str(row[2]).lower() or q in str(row[3]).lower()]
+        return results
+
+    def get_book_by_id(self, db_id):
+        try:
+            db_id = int(db_id)
+            for row in self.mock_data:
+                if row[0] == db_id:
+                    return row
+            return None
+        except:
+            return None
+
+    def insert_book_full(self, *values): 
+        print(f"Mock Insert: {values}")
+    def update_book_full(self, db_id, *values): 
+        print(f"Mock Update ID {db_id}: {values}")
+    def delete_book(self, db_id): 
+        print(f"Mock Delete ID {db_id}")
+# --- KẾT THÚC MOCKUP ---
 
 
 # --- HÀM HỖ TRỢ CƠ BẢN ---
@@ -15,50 +59,151 @@ def center_window(win, w, h):
     y = (hs // 2) - (h // 2)
     win.geometry(f'{w}x{h}+{x}+{y}')
 
-# --- CLASS CỬA SỔ ĐĂNG NHẬP ---
+# ----------------------------------------------------
+#               CLASS CỬA SỔ MENU CHÍNH
+# ----------------------------------------------------
+class MainMenuWindow:
+    def __init__(self, master, login_window_instance, db_conn):
+        self.master = master
+        self.login_window = login_window_instance
+        self.db_conn = db_conn
+        master.title("💡 HỆ THỐNG TRUNG TÂM QUẢN LÝ") 
+        
+        # Kích thước cửa sổ: 550x450, cân đối và gọn gàng
+        self.WIDTH = 550 
+        self.HEIGHT = 450 
+        center_window(master, self.WIDTH, self.HEIGHT)
+        master.resizable(False, False)
+        
+        self.book_manager_instance = None 
+        
+        self.setup_styles()
+        self.setup_widgets()
+
+    def setup_styles(self):
+        style = ttk.Style()
+        style.theme_use("clam")
+        
+        # Tiêu đề: Lớn và nổi bật
+        style.configure("MenuHeader.TLabel", font=('Arial', 32, 'bold'), foreground="#1E88E5", padding=15)
+        
+        # Style chung cho các nút chức năng: Cỡ chữ 18 (lớn hơn), padding dọc giảm (12)
+        style.configure("Menu.TButton", font=('Arial', 18, 'bold'), padding=[10, 12], relief="raised", borderwidth=0, foreground="#333333") 
+        
+        # 1. Quản lý kinh doanh (Xanh lá nhạt)
+        style.configure("Business.Menu.TButton", background="#E8F5E9") 
+        style.map("Business.Menu.TButton", background=[('active', '#C8E6C9')])
+
+        # 2. Quản lý thông tin sách (Xanh dương nhạt)
+        style.configure("BookInfo.Menu.TButton", background="#E3F2FD") 
+        style.map("BookInfo.Menu.TButton", background=[('active', '#BBDEFB')])
+
+        # 3. Quản lý kho sách (Vàng nhạt)
+        style.configure("Stock.Menu.TButton", background="#FFFDE7") 
+        style.map("Stock.Menu.TButton", background=[('active', '#FFF9C4')])
+
+        # Thoát Ứng dụng (Đỏ nhạt, chữ ĐỎ) 
+        style.configure("Exit.Menu.TButton", background="#FFEBEE", foreground="#C62828") 
+        style.map("Exit.Menu.TButton", background=[('active', '#FFCDD2')])
+        
+
+    def setup_widgets(self):
+        # Frame với padding ngang 70 để nút có độ rộng hợp lý
+        main_frame = ttk.Frame(self.master, padding="70 30") 
+        main_frame.pack(expand=True, fill='both')
+        main_frame.columnconfigure(0, weight=1) 
+        
+        # Tiêu đề - pady (10, 40) tạo khoảng trống phía trên và dưới
+        ttk.Label(main_frame, text="TRUNG TÂM QUẢN LÝ", style="MenuHeader.TLabel").grid(row=0, column=0, pady=(10, 40))
+
+        buttons_info = [
+            ("📈 1. Quản lý kinh doanh", "Business.Menu.TButton", lambda: messagebox.showinfo("Chức năng", "Chức năng Quản lý kinh doanh chưa được triển khai.")),
+            ("📚 2. Quản lý thông tin sách", "BookInfo.Menu.TButton", self.open_book_manager),
+            ("📦 3. Quản lý kho sách", "Stock.Menu.TButton", lambda: messagebox.showinfo("Chức năng", "Chức năng Quản lý kho sách chưa được triển khai.")),
+            ("❌ Thoát Ứng dụng", "Exit.Menu.TButton", self.logout_to_login) 
+        ]
+
+        for i, (text, style_name, command) in enumerate(buttons_info):
+            # Sử dụng pady 15 để chia đều không gian cho 4 nút
+            ttk.Button(main_frame, text=text, command=command, style=style_name).grid(row=i + 1, column=0, pady=15, sticky='ew')
+            
+    # ... (Các hàm khác giữ nguyên) ...
+    def open_book_manager(self):
+        self.master.withdraw() 
+        if not self.book_manager_instance or not self.book_manager_instance.master.winfo_exists():
+            book_window = tk.Toplevel(self.master)
+            book_window.protocol("WM_DELETE_WINDOW", self.close_book_manager)
+            self.book_manager_instance = BookManagerApp(book_window, self, self.db_conn)
+            center_window(book_window, 1200, 750) 
+        else:
+            self.book_manager_instance.master.deiconify()
+
+    def close_book_manager(self):
+        if self.book_manager_instance and self.book_manager_instance.master.winfo_exists():
+            self.book_manager_instance.master.withdraw()
+        self.master.deiconify()
+        
+    def logout_to_login(self):
+        if self.book_manager_instance and self.book_manager_instance.master.winfo_exists():
+            self.book_manager_instance.master.destroy() 
+        
+        if messagebox.askyesno("Xác nhận Thoát", "Bạn có muốn thoát chương trình?"):
+            self.master.destroy()
+            self.login_window.master.deiconify()
+            self.login_window.master.focus_set()
+
+
+# ----------------------------------------------------
+#               CÁC LỚP KHÁC (Giữ nguyên)
+# ----------------------------------------------------
 class LoginWindow:
-    def __init__(self, master, main_app_class):
+    def __init__(self, master, main_menu_class):
         self.master = master
         self.master.title("Đăng Nhập Hệ Thống Quản Lý")
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-        self.WIDTH = 450
-        self.HEIGHT = 220
+        self.WIDTH = 480
+        self.HEIGHT = 280
         center_window(master, self.WIDTH, self.HEIGHT)
         self.master.resizable(False, False)
-        self.main_app_class = main_app_class
-        self.main_app_instance = None
-        self.username_var = tk.StringVar()
-        self.password_var = tk.StringVar()
+        self.main_menu_class = main_menu_class
+        self.main_menu_instance = None 
+        self.username_var = tk.StringVar(value="admin") 
+        self.password_var = tk.StringVar(value="123") 
         self.setup_widgets()
-
+        
     def setup_widgets(self):
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("TLabel", font=('Arial', 12, 'bold'))
+        
+        style.configure("TLabel", font=('Arial', 12))
         style.configure("TEntry", font=('Arial', 12))
-        style.configure("Login.TButton", font=('Arial', 13, 'bold'), padding=8, background="#4CAF50", foreground="white")
-
-        main_frame = ttk.Frame(self.master, padding="25 20 25 20")
+        style.configure("LoginHeader.TLabel", font=('Arial', 18, 'bold'), foreground="#1E88E5")
+        style.configure("Login.TButton", font=('Arial', 13, 'bold'), padding=10, background="#4CAF50", foreground="white")
+        style.map("Login.TButton", background=[('active', '#43A047')])
+        
+        main_frame = ttk.Frame(self.master, padding="30 20 30 20")
         main_frame.pack(expand=True, fill='both')
         main_frame.grid_columnconfigure(1, weight=1)
 
-        ttk.Label(main_frame, text="👤 Tên tài khoản:").grid(row=0, column=0, sticky="w", padx=10, pady=8)
-        ttk.Entry(main_frame, textvariable=self.username_var, width=30).grid(row=0, column=1, padx=10, pady=8, sticky='ew')
+        ttk.Label(main_frame, text="ĐĂNG NHẬP HỆ THỐNG", style="LoginHeader.TLabel").grid(row=0, column=0, columnspan=2, pady=(0, 20))
 
-        ttk.Label(main_frame, text="🔒 Mật khẩu:").grid(row=1, column=0, sticky="w", padx=10, pady=8)
-        ttk.Entry(main_frame, textvariable=self.password_var, show='*', width=30).grid(row=1, column=1, padx=10, pady=8, sticky='ew')
+        ttk.Label(main_frame, text="👤 Tài khoản:", style="TLabel").grid(row=1, column=0, sticky="w", padx=10, pady=8)
+        ttk.Entry(main_frame, textvariable=self.username_var, width=35).grid(row=1, column=1, padx=10, pady=8, sticky='ew')
 
-        ttk.Button(main_frame, text="Đăng Nhập", command=self.login, style="Login.TButton").grid(row=2, column=0, columnspan=2, pady=20, sticky='ew')
+        ttk.Label(main_frame, text="🔒 Mật khẩu:", style="TLabel").grid(row=2, column=0, sticky="w", padx=10, pady=8)
+        ttk.Entry(main_frame, textvariable=self.password_var, show='*', width=35).grid(row=2, column=1, padx=10, pady=8, sticky='ew')
+
+        ttk.Button(main_frame, text="ĐĂNG NHẬP", command=self.login, style="Login.TButton").grid(row=3, column=0, columnspan=2, pady=25, sticky='ew')
         
         self.master.bind('<Return>', lambda event: self.login())
+
 
     def login(self):
         username = self.username_var.get()
         password = self.password_var.get()
         
         if username == "admin" and password == "123":
-            # GỌI HÀM KẾT NỐI TỪ connection_manager.py
             db_conn = getDbConnection()
             if db_conn is None:
                 messagebox.showerror("Lỗi CSDL", "Không thể kết nối đến cơ sở dữ liệu. Vui lòng kiểm tra Driver/Server/Tên CSDL.")
@@ -66,58 +211,30 @@ class LoginWindow:
             
             self.master.withdraw()
 
-            if not self.main_app_instance:
+            if not self.main_menu_instance or not self.main_menu_instance.master.winfo_exists():
                 self.main_window = tk.Toplevel(self.master)
-                self.main_window.protocol("WM_DELETE_WINDOW", self.logout_and_quit)
-
-                # TRUYỀN ĐỐI TƯỢNG KẾT NỐI (db_conn) VÀO BookManagerApp
-                self.main_app_instance = self.main_app_class(self.main_window, self, db_conn)
-
-                self.main_window.state('zoomed')
-                center_window(self.main_window, 950, 650)
-                self.main_window.deiconify()
-            else:
-                self.main_window.deiconify()
-                self.main_window.state('zoomed')
+                self.main_window.protocol("WM_DELETE_WINDOW", self.on_closing_menu)
+                self.main_menu_instance = self.main_menu_class(self.main_window, self, db_conn)
+            
+            self.main_window.deiconify()
         else:
             messagebox.showerror("Lỗi Đăng Nhập", "Tên tài khoản hoặc mật khẩu không đúng!")
             self.password_var.set("")
 
-    def logout_and_show_login(self):
-        if self.main_app_instance and self.main_app_instance.master:
-            self.main_app_instance.master.withdraw()
-            
-            # Đóng kết nối CSDL khi đăng xuất
-            if self.main_app_instance and self.main_app_instance.db.conn:
-                try:
-                    self.main_app_instance.db.conn.close()
-                except:
-                    pass
-            
-        self.master.deiconify()
-        self.master.focus_set()
-
-    def logout_and_quit(self):
+    def on_closing_menu(self):
         if messagebox.askyesno("Xác nhận Thoát", "Bạn có muốn thoát chương trình?"):
-            # Đóng kết nối CSDL khi thoát
-            if self.main_app_instance and self.main_app_instance.db.conn:
+            if self.main_menu_instance and self.main_menu_instance.db_conn:
                 try:
-                    self.main_app_instance.db.conn.close()
+                    self.main_menu_instance.db_conn.close()
                 except:
                     pass
-            self.master.quit()
-
+            self.master.quit() 
+        
     def on_closing(self):
         if messagebox.askyesno("Xác nhận Thoát", "Bạn có muốn thoát chương trình?"):
-            # Đóng kết nối CSDL khi thoát
-            if self.main_app_instance and self.main_app_instance.db.conn:
-                try:
-                    self.main_app_instance.db.conn.close()
-                except:
-                    pass
             self.master.quit()
 
-# --- CLASS CỬA SỔ TÌM KIẾM CÓ GỢI Ý (ĐÃ SỬA) ---
+
 class SearchWindow:
     def __init__(self, master, main_app_instance):
         self.master = master
@@ -127,39 +244,44 @@ class SearchWindow:
         master.title("🔍 Tìm Kiếm Sách Nhanh")
         master.transient(main_app_instance.master)
         master.grab_set()
-        center_window(master, 600, 480)
+        center_window(master, 650, 480)
         master.resizable(False, False)
         self.search_text = tk.StringVar()
 
         self.setup_widgets()
-
+        
     def setup_widgets(self):
-        main_frame = ttk.Frame(self.master, padding="15")
+        style = ttk.Style()
+        style.configure("SearchHeader.TLabel", font=('Arial', 14, 'bold'), foreground="#2196F3")
+        style.configure("Search.TButton", font=('Arial', 11, 'bold'), padding=8)
+
+        main_frame = ttk.Frame(self.master, padding="20")
         main_frame.pack(expand=True, fill='both')
 
-        ttk.Label(main_frame, text="Nhập từ khóa tìm kiếm (Tên sách, Tác giả, Mã sách...):", font=('Arial', 12, 'bold')).pack(pady=10, anchor='w')
+        ttk.Label(main_frame, text="Tìm Kiếm Nhanh Dữ Liệu Sách", style="SearchHeader.TLabel").pack(pady=(0, 15))
         
-        search_entry = ttk.Entry(main_frame, textvariable=self.search_text, width=70, font=('Arial', 12))
-        search_entry.pack(pady=5, fill='x')
+        ttk.Label(main_frame, text="Nhập từ khóa (Mã, Tên sách, Tác giả...):", font=('Arial', 11)).pack(pady=(5, 5), anchor='w')
+        
+        search_entry = ttk.Entry(main_frame, textvariable=self.search_text, font=('Arial', 12))
+        search_entry.pack(pady=(0, 15), fill='x', ipady=3)
         
         self.search_text.trace_add("write", self.update_suggestions)
-        
+        self.master.bind('<Return>', lambda event: self.select_first_suggestion())
+
         self.results_tree = ttk.Treeview(main_frame, columns=("BookID", "Title", "Author"), show='headings', height=10)
         
         self.results_tree.column("BookID", width=100, anchor='center')
-        self.results_tree.column("Title", width=250, anchor='w')
-        self.results_tree.column("Author", width=150, anchor='w')
+        self.results_tree.column("Title", width=300, anchor='w')
+        self.results_tree.column("Author", width=200, anchor='w')
         
         self.results_tree.heading("BookID", text="Mã Sách")
         self.results_tree.heading("Title", text="Tên Sách")
         self.results_tree.heading("Author", text="Tác Giả")
         
-        # Sửa event để kích hoạt chọn khi nhấp chuột
         self.results_tree.bind('<<TreeviewSelect>>', self.select_suggestion)
-
         self.results_tree.pack(pady=10, fill='both', expand=True)
 
-        ttk.Button(main_frame, text="Đóng", command=self.master.destroy, style="TButton").pack(pady=15, padx=10, fill='x')
+        ttk.Button(main_frame, text="ĐÓNG CỬA SỔ", command=self.master.destroy, style="Search.TButton").pack(pady=(15, 5), fill='x')
         
     def update_suggestions(self, *args):
         query = self.search_text.get().strip()
@@ -170,19 +292,23 @@ class SearchWindow:
         if not query:
             return
 
-        # Dữ liệu trả về: (Id, MaSach, TenSach, TenTacGia) - Giả định từ database.py
         results = self.db.search_for_suggestion(query)
 
         for row in results[:10]:
-            db_id = row[0] # Lấy ID CSDL
+            db_id = row[0] 
             book_id = row[1]
             title = row[2]  
             author = row[3]  
             
-            # Lưu db_id vào tags
             self.results_tree.insert('', tk.END, values=(book_id, title, author), tags=(db_id,))
+            
+    def select_first_suggestion(self):
+        children = self.results_tree.get_children()
+        if children:
+            self.results_tree.selection_set(children[0])
+            self.results_tree.focus(children[0])
+            self.select_suggestion(None) 
 
-    # *** PHẦN ĐÃ SỬA để lấy ID CSDL và tải dữ liệu lên form chính ***
     def select_suggestion(self, event):
         selected_items = self.results_tree.selection()
         if not selected_items:
@@ -191,35 +317,27 @@ class SearchWindow:
         item_id = selected_items[0]
         
         try:
-            # Lấy db_id từ 'tags' đã được lưu (là phần tử đầu tiên của tags tuple)
             db_id = self.results_tree.item(item_id, 'tags')[0]
         except IndexError:
-            # Trường hợp không có tag (không nên xảy ra)
             return
         
-        # Hàm get_book_by_id phải trả về đầy đủ 11 trường thông tin sách 
-        # (Id, MaSach, TenSach, TenTacGia, TenLinhVuc, LoaiSach, TenNXB, GiaMua, GiaBia, LanTaiBan, NamXB)
         book_info = self.db.get_book_by_id(db_id)
         
         if book_info:
-            # Tải dữ liệu lên form chính
-            # fill_form_with_data sẽ tự động chọn hàng tương ứng trong Treeview chính
             self.main_app.fill_form_with_data(book_info)
         
         self.master.destroy()
 
-
-# --- CLASS ỨNG DỤNG CHÍNH (QUẢN LÝ SÁCH) ---
 class BookManagerApp:
-    def __init__(self, master, login_window_instance, db_conn):
-        # TRUYỀN KẾT NỐI VÀO DATABASE MANAGER
+    def __init__(self, master, main_menu_instance, db_conn):
         self.db = DatabaseManager(db_conn)
         self.master = master
-        self.login_window = login_window_instance
-        master.title("📚 Hệ Thống Quản Lý Sách Chuyên Nghiệp")
+        self.main_menu = main_menu_instance 
+        master.title("📚 HỆ THỐNG QUẢN LÝ THÔNG TIN SÁCH")
         
         self.apply_styles()
         self.selected_book = None
+        
         self.book_id_text = tk.StringVar()
         self.book_name_text = tk.StringVar()
         self.author_text = tk.StringVar()
@@ -230,68 +348,88 @@ class BookManagerApp:
         self.cover_price_text = tk.StringVar(value="0.0")
         self.reprint_text = tk.StringVar(value="0")
         self.publish_year_text = tk.StringVar()
+        
+        self.total_books_var = tk.StringVar(value="Đang tải...")
+        self.status_var = tk.StringVar(value="Kết nối CSDL: Đã sẵn sàng (Mockup)")
 
         self.BOOK_TYPES = ["Sách Nước Ngoài", "Sách Trong Nước"]
-
-        self.master.grid_columnconfigure(0, weight=1)
-        self.master.grid_rowconfigure(0, weight=0)
-        self.master.grid_rowconfigure(1, weight=1)
-
+        
         self.setup_widgets()
-        self.view_command()
+        self.view_command() 
         
     def apply_styles(self):
         style = ttk.Style()
         style.theme_use("clam")
 
-        style.configure("Treeview.Heading", font=('Arial', 10, 'bold'), background="#4CAF50", foreground="white")
+        style.configure("Treeview.Heading", font=('Arial', 11, 'bold'), background="#2196F3", foreground="white", padding=[5, 5])
         style.configure("Treeview",
             font=('Arial', 10),
             rowheight=25,
-            # Cấu hình để có đường kẻ ngang và dọc như table
-            bordercolor="#B0B0B0",
+            bordercolor="#E0E0E0", 
             borderwidth=1,
-            relief="solid",
-            fieldbackground="white" # Màu nền trắng giúp đường kẻ nổi bật
+            relief="flat",
+            fieldbackground="#F5F5F5" 
         )
-        style.map('Treeview', background=[('selected', '#45A049')])
+        style.map('Treeview', background=[('selected', '#4CAF50')]) 
+        
+        style.configure("TLabel", font=('Arial', 10))
+        style.configure("Input.TLabel", font=('Arial', 10, 'bold'), foreground="#333333")
+        style.configure("TEntry", font=('Arial', 11), padding=2)
+        style.configure("TCombobox", font=('Arial', 11), padding=2)
+        style.configure("TSeparator", background="#CCCCCC") 
+        
+        style.configure("Action.TButton", font=('Arial', 11, 'bold'), padding=8, foreground="white")
+        style.configure("Primary.TButton", font=('Arial', 10, 'bold'), padding=8)
+        
+        style.configure("Add.Action.TButton", background="#4CAF50") 
+        style.map("Add.Action.TButton", background=[('active', '#43A047')])
 
-        style.configure("TLabel", font=('Arial', 11))
-        style.configure("TEntry", font=('Arial', 11))
-        style.configure("Input.TLabel", font=('Arial', 11, 'bold'))
+        style.configure("Update.Action.TButton", background="#2196F3") 
+        style.map("Update.Action.TButton", background=[('active', '#1E88E5')])
+        
+        style.configure("Delete.Action.TButton", background="#F44336") 
+        style.map("Delete.Action.TButton", background=[('active', '#E53935')])
 
-        style.configure("Add.TButton", font=('Arial', 11, 'bold'), padding=8, background="#4CAF50", foreground="white")
-        style.configure("Update.TButton", font=('Arial', 11, 'bold'), padding=8, background="#2196F3", foreground="white")
-        style.configure("Delete.TButton", font=('Arial', 11, 'bold'), padding=8, background="#F44336", foreground="white")
+        style.configure("Search.Primary.TButton", background="#FFC107", foreground="#333333") 
+        style.map("Search.Primary.TButton", background=[('active', '#FFB300')])
+        
+        style.configure("View.Primary.TButton", background="#9E9E9E", foreground="white") 
+        style.map("View.Primary.TButton", background=[('active', '#757575')])
+        
+        style.configure("Clear.Primary.TButton", background="#BDBDBD", foreground="#333333") 
+        style.map("Clear.Primary.TButton", background=[('active', '#A0A0A0')])
 
-        style.configure("Small.TButton", font=('Arial', 10, 'bold'), padding=6)
-        style.configure("Search.TButton", font=('Arial', 10, 'bold'), padding=6, background="#FFC107", foreground="#333333")
+        style.configure("Logout.Primary.TButton", background="#795548", foreground="white") 
+        style.map("Logout.Primary.TButton", background=[('active', '#6D4C41')])
+
         
     def setup_widgets(self):
-        top_frame = ttk.Frame(self.master, padding="10 10 10 10", relief=tk.RAISED)
-        top_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=10)
+        main_pane = ttk.PanedWindow(self.master, orient=tk.VERTICAL)
+        main_pane.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        top_frame.grid_columnconfigure(0, weight=3)
-        top_frame.grid_columnconfigure(1, weight=1)
+        control_frame = ttk.Frame(main_pane, padding="10")
+        control_frame.grid_columnconfigure(0, weight=1)
+        control_frame.grid_columnconfigure(1, weight=0) 
+        control_frame.grid_rowconfigure(0, weight=0) 
+        control_frame.grid_rowconfigure(1, weight=1) 
+        main_pane.add(control_frame, weight=0) 
 
-        # A. Khu vực Input (10 trường) - ĐÃ CẬP NHẬT LĨNH VỰC LÀ ENTRY
-        input_frame = ttk.Frame(top_frame, padding="5 5 5 5", relief=tk.GROOVE, borderwidth=1)
-        input_frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=5)
-
-        input_frame.grid_columnconfigure(1, weight=1)
-        input_frame.grid_columnconfigure(3, weight=1)
-
+        input_group = ttk.LabelFrame(control_frame, text=" CHI TIẾT SÁCH ", padding="15")
+        input_group.grid(row=0, column=0, sticky=N+E+S+W, padx=(0, 10), pady=(0, 5))
+        input_group.grid_columnconfigure(1, weight=1)
+        input_group.grid_columnconfigure(3, weight=1)
+        
         input_data = [
             ("MÃ SÁCH:", self.book_id_text, "entry"),
             ("TÊN SÁCH:", self.book_name_text, "entry"),
             ("TÁC GIẢ:", self.author_text, "entry"),
-            ("LĨNH VỰC:", self.field_text, "entry"), # ĐÃ CHUYỂN THÀNH ENTRY
+            ("LĨNH VỰC:", self.field_text, "entry"), 
             ("LOẠI SÁCH:", self.book_type_text, "combo", self.BOOK_TYPES),
             ("TÊN NXB:", self.publisher_name_text, "entry"), 
             ("GIÁ MUA:", self.buy_price_text, "spinbox", 0, 1000000),
             ("GIÁ BÌA:", self.cover_price_text, "spinbox", 0, 1000000),
             ("LẦN TÁI BẢN:", self.reprint_text, "spinbox", 0, 100),
-            ("NĂM XUẤT BẢN:", self.publish_year_text, "entry"),
+            ("NĂM XUẤT BẢN:", self.publish_year_text, "entry"), 
         ]
 
         for i, data in enumerate(input_data):
@@ -300,117 +438,121 @@ class BookManagerApp:
             col = (i % 2) * 2
             widget_col = col + 1
 
-            ttk.Label(input_frame, text=label_text, style="Input.TLabel").grid(row=row, column=col, sticky="w", padx=5, pady=5)
+            ttk.Label(input_group, text=label_text, style="Input.TLabel").grid(row=row, column=col, sticky=W, padx=10, pady=5)
 
             if widget_type == "entry":
-                ttk.Entry(input_frame, textvariable=var, font=('Arial', 11)).grid(row=row, column=widget_col, padx=5, pady=5, sticky='ew')
+                ttk.Entry(input_group, textvariable=var).grid(row=row, column=widget_col, padx=(0, 10), pady=5, sticky='ew')
             elif widget_type == "combo":
-                combo = ttk.Combobox(input_frame, textvariable=var, values=data[3], font=('Arial', 11), state='readonly')
-                combo.grid(row=row, column=widget_col, padx=5, pady=5, sticky='ew')
+                combo = ttk.Combobox(input_group, textvariable=var, values=data[3], state='readonly')
+                combo.grid(row=row, column=widget_col, padx=(0, 10), pady=5, sticky='ew')
                 if data[3]:
                     combo.set(data[3][0])
             elif widget_type == "spinbox":
                 from_val, to_val = data[3], data[4]
-                ttk.Spinbox(input_frame, textvariable=var, from_=from_val, to=to_val, wrap=True, font=('Arial', 11)).grid(row=row, column=widget_col, padx=5, pady=5, sticky='ew')
+                ttk.Spinbox(input_group, textvariable=var, from_=from_val, to=to_val, wrap=True).grid(row=row, column=widget_col, padx=(0, 10), pady=5, sticky='ew')
                 
-        # B. Khu vực Buttons
-        button_frame = ttk.Frame(top_frame, padding="5 5 5 5")
-        button_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=5)
+        info_group = ttk.LabelFrame(control_frame, text=" THÔNG TIN TỔNG QUAN ", padding="15")
+        info_group.grid(row=1, column=0, sticky=N+E+S+W, padx=(0, 10), pady=(5, 0)) 
+        info_group.grid_columnconfigure(0, weight=0) 
+        info_group.grid_columnconfigure(1, weight=1) 
+        
+        ttk.Label(info_group, text="Tổng số đầu sách:", style="Input.TLabel").grid(row=0, column=0, sticky=W, padx=10, pady=5)
+        ttk.Label(info_group, textvariable=self.total_books_var, font=('Arial', 12, 'bold'), foreground="#F44336").grid(row=0, column=1, sticky=W, padx=10, pady=5)
+        
+        ttk.Separator(info_group, orient='horizontal').grid(row=1, column=0, columnspan=2, sticky='ew', pady=5)
+        
+        ttk.Label(info_group, text="Trạng thái hệ thống:", style="Input.TLabel").grid(row=2, column=0, sticky=W, padx=10, pady=5)
+        ttk.Label(info_group, textvariable=self.status_var, font=('Arial', 10), foreground="#4CAF50").grid(row=2, column=1, sticky=W, padx=10, pady=5)
+
+
+        button_group = ttk.LabelFrame(control_frame, text=" CHỨC NĂNG ", padding="10")
+        button_group.grid(row=0, column=1, rowspan=2, sticky=N+S, padx=(10, 0))
+        button_group.grid_columnconfigure(0, weight=1)
 
         buttons_info = [
-            ("➕ Thêm Sách", self.add_command, "Add.TButton"),
-            ("🔄 Cập Nhật", self.update_command, "Update.TButton"),
-            ("❌ Xóa Sách", self.delete_command, "Delete.TButton"),
-            ("🔍 Tìm Kiếm", self.search_command, "Search.TButton"),
-            ("📚 Xem Tất Cả", self.view_command, "Small.TButton"),
-            ("🧹 Xóa Form", self.clear_form, "Small.TButton"),
-            ("🚪 Đăng Xuất", self.login_window.logout_and_show_login, "Small.TButton")
+            ("➕ THÊM SÁCH", self.add_command, "Add.Action.TButton"),
+            ("🔄 CẬP NHẬT", self.update_command, "Update.Action.TButton"),
+            ("❌ XÓA SÁCH", self.delete_command, "Delete.Action.TButton"),
+            ("---", None, "TSeparator"),
+            ("🔍 TÌM KIẾM", self.search_command, "Search.Primary.TButton"),
+            ("📚 XEM TẤT CẢ", self.view_command, "View.Primary.TButton"),
+            ("🧹 XÓA FORM", self.clear_form, "Clear.Primary.TButton"),
+            ("---", None, "TSeparator"),
+            ("⬅️ QUAY LẠI MENU", self.main_menu.close_book_manager, "Logout.Primary.TButton")
         ]
 
-        for i, (text, command, style_name) in enumerate(buttons_info):
-            ttk.Button(button_frame, text=text, command=command, style=style_name).grid(row=i, column=0, padx=5, pady=4, sticky='ew')
-
-        button_frame.grid_columnconfigure(0, weight=1)
-        
-        # 2. Bảng hiển thị (Treeview)
-        list_frame = ttk.Frame(self.master, padding="10 10 10 10")
-        list_frame.grid(row=1, column=0, sticky="nsew", padx=10, pady=10)
+        row_index = 0
+        for text, command, style_name in buttons_info:
+            if text == "---":
+                ttk.Separator(button_group, orient='horizontal').grid(row=row_index, column=0, sticky='ew', pady=8)
+            else:
+                ttk.Button(button_group, text=text, command=command, style=style_name).grid(row=row_index, column=0, padx=5, pady=4, sticky='ew')
+            row_index += 1
+            
+        list_frame = ttk.Frame(main_pane, padding="10")
         list_frame.grid_rowconfigure(0, weight=1)
         list_frame.grid_columnconfigure(0, weight=1)
+        main_pane.add(list_frame, weight=1) 
 
-        # CỘT CSDL trả về: (Id, MaSach, TenSach, TenTacGia, TenLinhVuc, LoaiSach, TenNXB, GiaMua, GiaBia, LanTaiBan, NamXB)
         all_column_ids = ["ID", "MaSach", "TenSach", "TacGia", "LinhVuc", "LoaiSach", "NXB", "GiaMua", "GiaBia", "LanTaiBan", "NamXB"]
         self.books_list = ttk.Treeview(list_frame, columns=all_column_ids, show='headings', style="Treeview")
-        self.books_list.grid(row=0, column=0, sticky="nsew")
         
-        # Ẩn cột ID CSDL
-        self.books_list.column("ID", width=0, minwidth=0, stretch=tk.NO)
+        vsb = ttk.Scrollbar(list_frame, orient="vertical", command=self.books_list.yview)
+        self.books_list.configure(yscrollcommand=vsb.set)
+        
+        self.books_list.grid(row=0, column=0, sticky=N+E+S+W)
+        vsb.grid(row=0, column=1, sticky='ns')
+        
+        self.books_list.column("ID", width=0, minwidth=0, stretch=NO)
         self.books_list.heading("ID", text="")
         
-        display_column_names = ["Mã Sách", "Tên Sách", "Tác Giả", "Lĩnh Vực", "Loại Sách", "Tên NXB", "Giá Mua", "Giá Bìa", "Lần TB", "Năm XB"]
-        display_column_ids = ["MaSach", "TenSach", "TacGia", "LinhVuc", "LoaiSach", "NXB", "GiaMua", "GiaBia", "LanTaiBan", "NamXB"]
-        col_widths = [100, 200, 150, 100, 100, 150, 80, 80, 60, 100]
+        display_column_names = ["Mã Sách", "Tên Sách", "Tác Giả", "Lĩnh Vực", "Loại Sách", "Tên NXB", "Năm XB", "Giá Mua", "Giá Bìa", "Lần TB"]
+        display_column_ids = ["MaSach", "TenSach", "TacGia", "LinhVuc", "LoaiSach", "NXB", "NamXB", "GiaMua", "GiaBia", "LanTaiBan"]
         
-        for i, (name, col_id, width) in enumerate(zip(display_column_names, display_column_ids, col_widths)):
-            anchor = 'w' if col_id in ["TenSach", "TacGia", "NXB", "LinhVuc"] else 'center'
-            if col_id in ["GiaMua", "GiaBia"]: anchor = 'e'
+        col_widths = [100, 180, 150, 100, 120, 120, 80, 80, 80, 70] 
+        
+        for name, col_id, width in zip(display_column_names, display_column_ids, col_widths):
+            anchor = W if col_id in ["TenSach", "TacGia", "NXB", "LinhVuc", "LoaiSach"] else E
+            if col_id in ["MaSach", "NamXB"]: anchor = 'center'
             
             self.books_list.column(col_id, width=width, minwidth=width, anchor=anchor)
             self.books_list.heading(col_id, text=name)
             
-        vsb = ttk.Scrollbar(list_frame, orient="vertical", command=self.books_list.yview)
-        vsb.grid(row=0, column=1, sticky='ns')
-        self.books_list.configure(yscrollcommand=vsb.set)
+        self.books_list.bind('<ButtonRelease-1>', self.get_selected_row)
 
-        self.books_list.bind('<Button-1>', self.get_selected_row)
-
-    # --- LOGIC XỬ LÝ FORM VÀ CSDL ---
     def fill_form_with_data(self, book_info, update_selection=True):
         self.clear_form()
         self.selected_book = book_info
 
-        # Hàm hỗ trợ làm sạch chuỗi
         def clean_str(val):
             if val is not None:
-                # Xóa khoảng trắng và ký tự nháy đơn (nếu có, do lỗi hiển thị từ DB)
                 return str(val).strip().strip("'") 
             return ""
 
-        # Dữ liệu chuỗi: ID DB (0), Mã Sách (1), Tên Sách (2), Tác Giả (3), Lĩnh Vực (4), Loại Sách (5), Tên NXB (6)
         self.book_id_text.set(clean_str(book_info[1]))
         self.book_name_text.set(clean_str(book_info[2]))
         self.author_text.set(clean_str(book_info[3]))
-        
-        # Xử lý Lĩnh Vực (Entry)
         self.field_text.set(clean_str(book_info[4]))
         
-        # Xử lý ComboBox Loại Sách
         type_val = clean_str(book_info[5])
-        self.book_type_text.set(type_val if type_val in self.BOOK_TYPES else self.BOOK_TYPES[0])
+        self.book_type_text.set(type_val if type_val in self.BOOK_TYPES else (self.BOOK_TYPES[0] if self.BOOK_TYPES else ""))
         
         self.publisher_name_text.set(clean_str(book_info[6]))
 
-        # Dữ liệu số: Giá Mua (7), Giá Bìa (8), Lần TB (9), Năm XB (10)
         self.buy_price_text.set(str(book_info[7]) if book_info[7] is not None else "0.0")
         self.cover_price_text.set(str(book_info[8]) if book_info[8] is not None else "0.0")
         self.reprint_text.set(str(book_info[9]) if book_info[9] is not None else "0")
         self.publish_year_text.set(clean_str(book_info[10]))
         
         
-        # === PHẦN KHẮC PHỤC LỖI ĐỆ QUY VÀ CHỈ CHỌN LẠI KHI CẦN ===
         if update_selection:
             db_id_to_select = str(book_info[0])
             
-            # 1. Hủy liên kết sự kiện trước khi thiết lập lại lựa chọn
-            self.books_list.unbind('<Button-1>')
-            self.books_list.unbind('<<TreeviewSelect>>')
-            
-            # 2. Xóa và tìm hàng để chọn lại (cần cho chức năng TÌM KIẾM/CẬP NHẬT)
+            self.books_list.unbind('<ButtonRelease-1>')
             self.books_list.selection_remove(self.books_list.selection())
 
             found_item = None
             for item in self.books_list.get_children():
-                # values[0] là ID CSDL (hidden column)
                 if str(self.books_list.item(item, 'values')[0]) == db_id_to_select:
                     found_item = item
                     break
@@ -420,8 +562,7 @@ class BookManagerApp:
                 self.books_list.focus(found_item)
                 self.books_list.see(found_item)
                     
-            # 3. Liên kết lại sự kiện sau khi hoàn thành
-            self.books_list.bind('<Button-1>', self.get_selected_row)
+            self.books_list.bind('<ButtonRelease-1>', self.get_selected_row)
 
     def clear_form(self):
         self.book_id_text.set("")
@@ -443,42 +584,38 @@ class BookManagerApp:
             self.books_list.selection_remove(self.books_list.selection())
             
     def get_selected_row(self, event):
-        # 1. Tìm item được click ngay dưới con trỏ chuột
-        selected_item = self.books_list.identify_row(event.y)
+        selected_item = self.books_list.focus() 
         
-        # Nếu không click vào hàng nào (click vào vùng trống/heading)
         if not selected_item:
-            # Nếu có mục đã chọn trước đó, hãy xóa chọn
-            if self.books_list.selection():
-                self.books_list.selection_remove(self.books_list.selection())
+            self.books_list.selection_remove(self.books_list.selection())
             self.clear_form()
             return
             
-        # 2. Xóa các mục đã chọn trước (để tránh chọn nhiều)
         self.books_list.selection_remove(self.books_list.selection())
-        
-        # 3. Chọn item vừa click
-        self.books_list.selection_set(selected_item)
-        self.books_list.focus(selected_item) # Bắt buộc focus để highlight
-        
-        # 4. Lấy dữ liệu và tải lên form
+            
         values = self.books_list.item(selected_item, 'values')
         
-        # Ngăn chặn đệ quy (vì đang trong quá trình chọn)
         self.fill_form_with_data(values, update_selection=False)
         
-
     def view_command(self):
         self.clear_form()
         for item in self.books_list.get_children():
             self.books_list.delete(item)
             
+        self.total_books_var.set("Đang tải...") 
+        
         try:
-            # view_all phải trả về tuple (Id, MaSach, TenSach, TenTacGia, TenLinhVuc, LoaiSach, TenNXB, GiaMua, GiaBia, LanTaiBan, NamXB)
-            for row in self.db.view_all():
+            data = self.db.view_all()
+            for row in data:
                 self.books_list.insert('', tk.END, values=row)
+            
+            self.total_books_var.set(f"{len(data)} đầu sách") 
+            self.status_var.set("Kết nối CSDL: Đã sẵn sàng (Mockup)")
+            
         except Exception as e:
             messagebox.showerror("Lỗi CSDL", f"Không thể tải dữ liệu: {e}")
+            self.total_books_var.set("LỖI KẾT NỐI!")
+            self.status_var.set("Kết nối CSDL: Lỗi")
             
     def get_all_input_values(self):
         return (
@@ -489,15 +626,12 @@ class BookManagerApp:
         )
         
     def validate_input(self, values):
-        # Yêu cầu MaSach, TenSach, TenTacGia (values[0], values[1], values[2])
         if not values[0] or not values[1] or not values[2]:
             messagebox.showerror("Lỗi", "Vui lòng điền tối thiểu Mã Sách, Tên Sách, và Tác Giả.")
             return False
-        # Dữ liệu số
         try:
             float(values[6])
             float(values[7])
-            # Kiểm tra Lần Tái Bản có phải là số nguyên không
             reprint_val = values[8].strip()
             if reprint_val:
                  int(reprint_val)
@@ -510,7 +644,6 @@ class BookManagerApp:
         values = self.get_all_input_values()
         if not self.validate_input(values): return
         try:
-            # Truyền TÊN vào hàm, database.py sẽ lo việc chuyển đổi thành ID
             self.db.insert_book_full(*values)
             self.view_command()
             messagebox.showinfo("Thành công", f"Đã thêm sách: {values[1]}")
@@ -521,11 +654,10 @@ class BookManagerApp:
         if not self.selected_book:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn một sách để cập nhật.")
             return
-        book_db_id = self.selected_book[0] # ID CSDL
+        book_db_id = self.selected_book[0]
         values = self.get_all_input_values()
         if not self.validate_input(values): return
         try:
-            # Truyền TÊN vào hàm, database.py sẽ lo việc chuyển đổi thành ID
             self.db.update_book_full(book_db_id, *values)
             self.view_command()
             messagebox.showinfo("Thành công", f"Đã cập nhật sách ID: {book_db_id}")
@@ -536,7 +668,7 @@ class BookManagerApp:
         if not self.selected_book:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn một sách để xóa.")
             return
-        book_id = self.selected_book[0] # ID CSDL
+        book_id = self.selected_book[0]
         book_title = self.selected_book[2]
 
         if messagebox.askyesno("Xác nhận Xóa", f"Bạn có chắc chắn muốn xóa sách:\n'{book_title}' (ID: {book_id})?"):
@@ -551,8 +683,9 @@ class BookManagerApp:
         search_window = tk.Toplevel(self.master)
         SearchWindow(search_window, self)
 
+
 # --- KHỞI CHẠY ỨNG DỤNG ---
 if __name__ == '__main__':
     root = tk.Tk()
-    login_app = LoginWindow(root, BookManagerApp)
+    login_app = LoginWindow(root, MainMenuWindow) 
     root.mainloop()
