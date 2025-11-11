@@ -11,8 +11,8 @@ class MainMenuWindow:
         self.user_info = user_info  # Thông tin user đã đăng nhập
         
         master.title("💡 HỆ THỐNG TRUNG TÂM QUẢN LÝ")
-        self.WIDTH = 550
-        self.HEIGHT = 480
+        self.WIDTH = 600
+        self.HEIGHT = 600
         center_window(master, self.WIDTH, self.HEIGHT)
         master.resizable(False, False)
         

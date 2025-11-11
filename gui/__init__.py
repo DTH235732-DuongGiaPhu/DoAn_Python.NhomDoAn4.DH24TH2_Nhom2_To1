@@ -1,18 +1,18 @@
-# gui/__init__.py
+# gui/__init__.py - Export các class từ GUI modules
+
 from .login_window import LoginWindow
 from .register_window import RegisterWindow
 from .main_menu import MainMenuWindow
 from .book_manager import BookManagerApp
-from .inventory_manager import InventoryManagerApp, InventoryTransactionWindow
+from .inventory_manager import InventoryManagerApp
 from .search_windows import SearchWindow, InventorySearchWindow
 
 __all__ = [
-    'LoginWindow', 
+    'LoginWindow',
     'RegisterWindow',
     'MainMenuWindow',
     'BookManagerApp',
     'InventoryManagerApp',
-    'InventoryTransactionWindow',
     'SearchWindow',
     'InventorySearchWindow'
 ]
