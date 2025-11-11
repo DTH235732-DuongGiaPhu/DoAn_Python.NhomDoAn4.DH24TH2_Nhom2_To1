@@ -1,0 +1,10 @@
+# Thư viện cơ bản cho ứng dụng
+# Tkinter đã có sẵn trong Python
+
+# Kết nối Database (sẽ dùng sau)
+# pyodbc==4.0.39  # Cho SQL Server
+# pymysql==1.1.0  # Cho MySQL
+# sqlite3 đã có sẵn trong Python
+
+# Tiện ích bổ sung
+pillow==10.1.0  # Xử lý hình ảnh (nếu cần)
