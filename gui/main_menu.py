@@ -1,4 +1,3 @@
-# gui/main_menu.py - Menu chính của ứng dụng
 import tkinter as tk
 from tkinter import ttk, messagebox
 from utils.helpers import center_window
@@ -18,6 +17,7 @@ class MainMenuWindow:
         
         self.book_manager_instance = None
         self.inventory_manager_instance = None
+        self.business_manager_instance = None  # THÊM MỚI
         
         self.setup_styles()
         self.setup_widgets()
@@ -64,7 +64,34 @@ class MainMenuWindow:
     
     def open_business_manager(self):
         """Mở module quản lý kinh doanh"""
-        messagebox.showinfo("Thông báo", "Chức năng Quản lý kinh doanh đang được phát triển.\nSẽ có trong phiên bản tiếp theo!")
+        from gui.business_manager import BusinessManagerApp
+        
+        self.master.withdraw()
+        
+        # Ẩn các cửa sổ khác nếu đang mở
+        if self.book_manager_instance:
+            if self.book_manager_instance.master.winfo_exists():
+                self.book_manager_instance.master.withdraw()
+        
+        if self.inventory_manager_instance:
+            if self.inventory_manager_instance.master.winfo_exists():
+                self.inventory_manager_instance.master.withdraw()
+        
+        if not self.business_manager_instance or not self.business_manager_instance.master.winfo_exists():
+            business_window = tk.Toplevel(self.master)
+            business_window.protocol("WM_DELETE_WINDOW", self.close_business_manager)
+            business_window.state('zoomed')  # Toàn màn hình
+            self.business_manager_instance = BusinessManagerApp(business_window, self, self.db_conn)
+        else:
+            self.business_manager_instance.master.state('zoomed')  # Set lại zoomed
+            self.business_manager_instance.master.deiconify()
+        self.business_manager_instance.load_orders()
+    
+    def close_business_manager(self):
+        """Đóng cửa sổ quản lý kinh doanh"""
+        if self.business_manager_instance and self.business_manager_instance.master.winfo_exists():
+            self.business_manager_instance.master.withdraw()
+        self.master.deiconify()
     
     def open_book_manager(self):
         """Mở cửa sổ quản lý sách"""
@@ -80,9 +107,10 @@ class MainMenuWindow:
         if not self.book_manager_instance or not self.book_manager_instance.master.winfo_exists():
             book_window = tk.Toplevel(self.master)
             book_window.protocol("WM_DELETE_WINDOW", self.close_book_manager)
+            book_window.state('zoomed')  # Toàn màn hình
             self.book_manager_instance = BookManagerApp(book_window, self, self.db_conn)
-            center_window(book_window, 1200, 750)
         else:
+            self.book_manager_instance.master.state('zoomed')  # Set lại zoomed
             self.book_manager_instance.master.deiconify()
     
     def close_book_manager(self):
@@ -104,9 +132,10 @@ class MainMenuWindow:
         if not self.inventory_manager_instance or not self.inventory_manager_instance.master.winfo_exists():
             inventory_window = tk.Toplevel(self.master)
             inventory_window.protocol("WM_DELETE_WINDOW", self.close_inventory_manager)
+            inventory_window.state('zoomed')  # Toàn màn hình
             self.inventory_manager_instance = InventoryManagerApp(inventory_window, self, self.db_conn)
-            center_window(inventory_window, 1000, 650)
         else:
+            self.inventory_manager_instance.master.state('zoomed')  # Set lại zoomed
             self.inventory_manager_instance.master.deiconify()
         self.inventory_manager_instance.view_inventory_command()
     
@@ -122,6 +151,8 @@ class MainMenuWindow:
                 self.book_manager_instance.master.destroy()
             if self.inventory_manager_instance and self.inventory_manager_instance.master.winfo_exists():
                 self.inventory_manager_instance.master.destroy()
+            if self.business_manager_instance and self.business_manager_instance.master.winfo_exists():
+                self.business_manager_instance.master.destroy()
             self.master.destroy()
             self.login_window.master.deiconify()
             self.login_window.master.focus_set()

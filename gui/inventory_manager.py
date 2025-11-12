@@ -1,12 +1,10 @@
-# gui/inventory_manager.py - QUẢN LÝ KHO SÁCH CHUYÊN NGHIỆP
 import tkinter as tk
 from tkinter import ttk, messagebox
-from tkinter.constants import N, E, S, W
 from database.book_database import DatabaseManager
 from utils.helpers import center_window, format_currency
 
 class InventoryManagerApp:
-    """Ứng dụng quản lý kho sách chuyên nghiệp với giao diện đẹp"""
+    """Ứng dụng quản lý kho sách - Phiên bản ổn định"""
     
     def __init__(self, master, main_menu_instance, db_conn):
         self.db = DatabaseManager(db_conn)
@@ -16,10 +14,6 @@ class InventoryManagerApp:
         
         # Biến điều khiển
         self.selected_inventory_record = None
-        self.book_id_text = tk.StringVar()
-        self.book_name_text = tk.StringVar()
-        self.quantity_text = tk.StringVar(value="0")
-        self.location_text = tk.StringVar()
         
         # Biến thống kê
         self.total_books_var = tk.StringVar(value="0")
@@ -32,179 +26,46 @@ class InventoryManagerApp:
         self.filter_location_var = tk.StringVar(value="Tất cả")
         self.sort_by_var = tk.StringVar(value="Mã sách")
         
-        self.apply_professional_styles()
-        self.setup_professional_widgets()
-    
-    def apply_professional_styles(self):
-        """Áp dụng theme chuyên nghiệp cao cấp"""
-        style = ttk.Style()
-        style.theme_use("clam")
-        
-        # === COLORS - Bảng màu chuyên nghiệp ===
+        # Colors
         self.colors = {
-            'primary': '#1976D2',      # Blue - Màu chủ đạo
-            'success': '#4CAF50',      # Green - Thành công
-            'warning': '#FF9800',      # Orange - Cảnh báo
-            'danger': '#F44336',       # Red - Nguy hiểm
-            'info': '#00BCD4',         # Cyan - Thông tin
-            'light': '#F5F5F5',        # Light Gray - Nền sáng
-            'dark': '#212121',         # Dark Gray - Text tối
-            'white': '#FFFFFF',        # White
-            'border': '#E0E0E0',       # Border
+            'primary': '#1976D2',
+            'success': '#4CAF50',
+            'warning': '#FF9800',
+            'danger': '#F44336',
+            'info': '#00BCD4',
+            'light': '#F5F5F5',
+            'dark': '#212121',
+            'white': '#FFFFFF',
+            'border': '#E0E0E0',
         }
         
-        # === HEADER STYLES ===
-        style.configure("HeaderTitle.TLabel",
-            font=('Segoe UI', 18, 'bold'),
-            foreground=self.colors['primary'],
-            background=self.colors['white'])
-        
-        style.configure("SectionHeader.TLabel",
-            font=('Segoe UI', 12, 'bold'),
-            foreground=self.colors['dark'],
-            background=self.colors['light'],
-            padding=10)
-        
-        # === STAT CARD STYLES ===
-        style.configure("StatLabel.TLabel",
-            font=('Segoe UI', 10),
-            foreground='#666666',
-            background=self.colors['white'])
-        
-        style.configure("StatValue.TLabel",
-            font=('Segoe UI', 20, 'bold'),
-            background=self.colors['white'])
-        
-        # === TREEVIEW - Bảng dữ liệu chuyên nghiệp ===
-        style.configure("Professional.Treeview",
-            font=('Segoe UI', 10),
-            rowheight=35,
-            borderwidth=0,
-            relief="flat",
-            fieldbackground=self.colors['white'])
-        
-        style.configure("Professional.Treeview.Heading",
-            font=('Segoe UI', 11, 'bold'),
-            background=self.colors['primary'],
-            foreground=self.colors['white'],
-            borderwidth=0,
-            relief="flat")
-        
-        style.map('Professional.Treeview',
-            background=[('selected', self.colors['info'])],
-            foreground=[('selected', self.colors['white'])])
-        
-        # === BUTTON STYLES - Nút bấm đẹp ===
-        button_config = {
-            'font': ('Segoe UI', 10, 'bold'),
-            'borderwidth': 0,
-            'relief': 'flat',
-            'padding': (15, 10)
-        }
-        
-        # Primary Button
-        style.configure("Primary.TButton",
-            **button_config,
-            background=self.colors['primary'],
-            foreground=self.colors['white'])
-        style.map("Primary.TButton",
-            background=[('active', '#1565C0'), ('pressed', '#0D47A1')])
-        
-        # Success Button (Nhập kho)
-        style.configure("Success.TButton",
-            **button_config,
-            background=self.colors['success'],
-            foreground=self.colors['white'])
-        style.map("Success.TButton",
-            background=[('active', '#388E3C'), ('pressed', '#2E7D32')])
-        
-        # Danger Button (Xuất kho)
-        style.configure("Danger.TButton",
-            **button_config,
-            background=self.colors['danger'],
-            foreground=self.colors['white'])
-        style.map("Danger.TButton",
-            background=[('active', '#E53935'), ('pressed', '#C62828')])
-        
-        # Warning Button
-        style.configure("Warning.TButton",
-            **button_config,
-            background=self.colors['warning'],
-            foreground=self.colors['white'])
-        style.map("Warning.TButton",
-            background=[('active', '#F57C00'), ('pressed', '#E65100')])
-        
-        # Info Button
-        style.configure("Info.TButton",
-            **button_config,
-            background=self.colors['info'],
-            foreground=self.colors['white'])
-        style.map("Info.TButton",
-            background=[('active', '#00ACC1'), ('pressed', '#0097A7')])
-        
-        # Secondary Button
-        style.configure("Secondary.TButton",
-            **button_config,
-            background='#757575',
-            foreground=self.colors['white'])
-        style.map("Secondary.TButton",
-            background=[('active', '#616161'), ('pressed', '#424242')])
-        
-        # === ENTRY & COMBOBOX ===
-        style.configure("Professional.TEntry",
-            font=('Segoe UI', 10),
-            fieldbackground=self.colors['white'],
-            borderwidth=1,
-            relief='solid')
-        
-        style.configure("Professional.TCombobox",
-            font=('Segoe UI', 10),
-            fieldbackground=self.colors['white'])
-        
-        # === LABELFRAME ===
-        style.configure("Professional.TLabelframe",
-            background=self.colors['white'],
-            borderwidth=2,
-            relief='solid')
-        
-        style.configure("Professional.TLabelframe.Label",
-            font=('Segoe UI', 11, 'bold'),
-            foreground=self.colors['primary'],
-            background=self.colors['white'])
+        self.setup_widgets()
     
-    def setup_professional_widgets(self):
-        """Thiết lập giao diện chuyên nghiệp"""
-        # Main Container với padding
+    def setup_widgets(self):
+        """Setup giao diện"""
         main_container = tk.Frame(self.master, bg=self.colors['light'], padx=20, pady=15)
         main_container.pack(fill='both', expand=True)
         
-        # ========== HEADER SECTION ==========
+        # HEADER
         header_frame = tk.Frame(main_container, bg=self.colors['white'], padx=20, pady=15)
         header_frame.pack(fill='x', pady=(0, 15))
         
-        # Title với icon
-        title_frame = tk.Frame(header_frame, bg=self.colors['white'])
-        title_frame.pack(side='left')
+        tk.Label(header_frame,
+            text="📦 QUẢN LÝ KHO SÁCH",
+            font=('Segoe UI', 18, 'bold'),
+            fg=self.colors['primary'],
+            bg=self.colors['white']).pack(side='left')
         
-        ttk.Label(title_frame, 
-            text="📦 QUẢN LÝ KHO SÁCH", 
-            style="HeaderTitle.TLabel").pack(side='left')
-        
-        # Status
-        status_frame = tk.Frame(header_frame, bg=self.colors['white'])
-        status_frame.pack(side='right')
-        
-        ttk.Label(status_frame, 
+        tk.Label(header_frame,
             textvariable=self.status_var,
             font=('Segoe UI', 10),
-            foreground=self.colors['success'],
-            background=self.colors['white']).pack()
+            fg=self.colors['success'],
+            bg=self.colors['white']).pack(side='right')
         
-        # ========== STATISTICS DASHBOARD ==========
+        # STATISTICS DASHBOARD
         stats_container = tk.Frame(main_container, bg=self.colors['light'])
         stats_container.pack(fill='x', pady=(0, 15))
         
-        # 4 stat cards
         stat_cards = [
             ("📚", "Tổng đầu sách", self.total_books_var, self.colors['primary']),
             ("📦", "Tổng số lượng", self.total_quantity_var, self.colors['success']),
@@ -217,36 +78,31 @@ class InventoryManagerApp:
             card.grid(row=0, column=i, padx=8, sticky='ew')
             stats_container.columnconfigure(i, weight=1)
         
-        # ========== FILTER & SEARCH TOOLBAR ==========
+        # TOOLBAR
         toolbar_frame = tk.Frame(main_container, bg=self.colors['white'], padx=15, pady=12)
         toolbar_frame.pack(fill='x', pady=(0, 15))
         
-        # Left side - Filters
         left_toolbar = tk.Frame(toolbar_frame, bg=self.colors['white'])
         left_toolbar.pack(side='left', fill='x', expand=True)
         
-        # Location filter
-        tk.Label(left_toolbar, 
-            text="📍 Vị trí:", 
+        tk.Label(left_toolbar,
+            text="📍 Vị trí:",
             font=('Segoe UI', 10, 'bold'),
-            bg=self.colors['white'],
-            fg=self.colors['dark']).pack(side='left', padx=(0, 8))
+            bg=self.colors['white']).pack(side='left', padx=(0, 8))
         
         location_combo = ttk.Combobox(left_toolbar,
             textvariable=self.filter_location_var,
-            values=["Tất cả", "Kệ A1", "Kệ B2", "Kệ C3", "Kệ D4"],
+            values=["Tất cả", "Kệ A1", "Kệ A2", "Kệ B1", "Kệ B2", "Kệ C1", "Kệ C2", "Kệ C3", "Kệ D1", "Kệ D2", "Kệ D3", "Kệ D4"],
             state='readonly',
             width=12,
             font=('Segoe UI', 10))
         location_combo.pack(side='left', padx=(0, 20))
         location_combo.bind('<<ComboboxSelected>>', lambda e: self.apply_filter())
         
-        # Sort filter
         tk.Label(left_toolbar,
             text="🔽 Sắp xếp:",
             font=('Segoe UI', 10, 'bold'),
-            bg=self.colors['white'],
-            fg=self.colors['dark']).pack(side='left', padx=(0, 8))
+            bg=self.colors['white']).pack(side='left', padx=(0, 8))
         
         sort_combo = ttk.Combobox(left_toolbar,
             textvariable=self.sort_by_var,
@@ -257,41 +113,68 @@ class InventoryManagerApp:
         sort_combo.pack(side='left')
         sort_combo.bind('<<ComboboxSelected>>', lambda e: self.apply_filter())
         
-        # Right side - Action buttons
         right_toolbar = tk.Frame(toolbar_frame, bg=self.colors['white'])
         right_toolbar.pack(side='right')
         
-        ttk.Button(right_toolbar,
+        # Nút toolbar với tk.Button
+        tk.Button(right_toolbar,
             text="🔍 Tìm kiếm",
             command=self.search_inventory_command,
-            style="Warning.TButton").pack(side='left', padx=4)
+            font=('Segoe UI', 10, 'bold'),
+            bg=self.colors['warning'],
+            fg='white',
+            bd=0,
+            padx=15,
+            pady=8,
+            cursor='hand2').pack(side='left', padx=4)
         
-        ttk.Button(right_toolbar,
+        tk.Button(right_toolbar,
             text="🔄 Làm mới",
             command=self.view_inventory_command,
-            style="Info.TButton").pack(side='left', padx=4)
+            font=('Segoe UI', 10, 'bold'),
+            bg=self.colors['info'],
+            fg='white',
+            bd=0,
+            padx=15,
+            pady=8,
+            cursor='hand2').pack(side='left', padx=4)
         
-        # ========== DATA TABLE ==========
+        # DATA TABLE
         table_container = tk.Frame(main_container, bg=self.colors['white'], padx=2, pady=2)
         table_container.pack(fill='both', expand=True, pady=(0, 15))
         
-        # Scrollbars
+        # Treeview style
+        style = ttk.Style()
+        style.configure("Inventory.Treeview",
+            font=('Segoe UI', 10),
+            rowheight=35,
+            borderwidth=0,
+            fieldbackground=self.colors['white'])
+        
+        style.configure("Inventory.Treeview.Heading",
+            font=('Segoe UI', 11, 'bold'),
+            background=self.colors['primary'],
+            foreground=self.colors['white'],
+            borderwidth=0)
+        
+        style.map('Inventory.Treeview',
+            background=[('selected', self.colors['info'])],
+            foreground=[('selected', self.colors['white'])])
+        
         scroll_y = ttk.Scrollbar(table_container, orient='vertical')
         scroll_x = ttk.Scrollbar(table_container, orient='horizontal')
         
-        # Treeview
         self.inventory_tree = ttk.Treeview(table_container,
             columns=("ID", "MaSach", "TenSach", "SoLuong", "ViTri", "TrangThai"),
             show='headings',
             yscrollcommand=scroll_y.set,
             xscrollcommand=scroll_x.set,
             selectmode='browse',
-            style="Professional.Treeview")
+            style="Inventory.Treeview")
         
         scroll_y.config(command=self.inventory_tree.yview)
         scroll_x.config(command=self.inventory_tree.xview)
         
-        # Column configuration
         columns_config = {
             "ID": (60, 'center', 'ID'),
             "MaSach": (100, 'center', 'Mã Sách'),
@@ -305,7 +188,6 @@ class InventoryManagerApp:
             self.inventory_tree.heading(col, text=heading)
             self.inventory_tree.column(col, width=width, anchor=anchor)
         
-        # Grid layout
         self.inventory_tree.grid(row=0, column=0, sticky='nsew')
         scroll_y.grid(row=0, column=1, sticky='ns')
         scroll_x.grid(row=1, column=0, sticky='ew')
@@ -313,96 +195,67 @@ class InventoryManagerApp:
         table_container.rowconfigure(0, weight=1)
         table_container.columnconfigure(0, weight=1)
         
-        # Bind events
         self.inventory_tree.bind('<<TreeviewSelect>>', self.on_tree_select)
         self.inventory_tree.bind('<Double-1>', self.on_double_click)
         
-        # ========== DETAIL FORM ==========
-        form_frame = ttk.LabelFrame(main_container,
-            text="  📝 THÔNG TIN NHẬP/XUẤT KHO  ",
-            style="Professional.TLabelframe",
-            padding=20)
-        form_frame.pack(fill='x', pady=(0, 15))
-        
-        # Form grid
-        form_grid = tk.Frame(form_frame, bg=self.colors['white'])
-        form_grid.pack(fill='x')
-        
-        # Row 0
-        self.create_form_field(form_grid, "Mã sách:", self.book_id_text, 0, 0, readonly=True)
-        self.create_form_field(form_grid, "Số lượng tồn:", self.quantity_text, 0, 2)
-        
-        # Row 1
-        self.create_form_field(form_grid, "Tên sách:", self.book_name_text, 1, 0, readonly=True, width=30)
-        self.create_form_field(form_grid, "Vị trí kho:", self.location_text, 1, 2)
-        
-        # ========== ACTION BUTTONS ==========
+        # ACTION BUTTONS - DÙNG TK.BUTTON ĐỂ TRÁNH LỖI STYLE
         action_frame = tk.Frame(main_container, bg=self.colors['light'])
         action_frame.pack(fill='x')
         
-        buttons = [
-            ("➕ NHẬP KHO", self.stock_in_command, "Success.TButton"),
-            ("➖ XUẤT KHO", self.stock_out_command, "Danger.TButton"),
-            ("🔍 TÌM KIẾM", self.search_inventory_command, "Warning.TButton"),
-            ("🔄 TẢI LẠI", self.view_inventory_command, "Info.TButton"),
-            ("🗑️ XÓA FORM", self.clear_form, "Secondary.TButton"),
-            ("↩️ QUAY LẠI", self.return_to_menu, "Secondary.TButton")
-        ]
+        # Button config
+        btn_config = {
+            'font': ('Segoe UI', 11, 'bold'),
+            'bd': 0,
+            'cursor': 'hand2',
+            'pady': 12
+        }
         
-        for text, command, style in buttons:
-            btn = ttk.Button(action_frame, text=text, command=command, style=style, width=18)
-            btn.pack(side='left', padx=5)
+        tk.Button(action_frame,
+            text="➕ NHẬP KHO",
+            command=self.open_stock_in_popup,
+            bg=self.colors['success'],
+            fg='white',
+            **btn_config).pack(side='left', padx=8, expand=True, fill='x')
+        
+        tk.Button(action_frame,
+            text="➖ XUẤT KHO",
+            command=self.open_stock_out_popup,
+            bg=self.colors['danger'],
+            fg='white',
+            **btn_config).pack(side='left', padx=8, expand=True, fill='x')
+        
+        tk.Button(action_frame,
+            text="↩️ QUAY LẠI MENU",
+            command=self.return_to_menu,
+            bg='#757575',
+            fg='white',
+            **btn_config).pack(side='left', padx=8, expand=True, fill='x')
     
     def create_stat_card(self, parent, icon, label, value_var, color):
-        """Tạo card thống kê đẹp mắt"""
+        """Tạo card thống kê"""
         card = tk.Frame(parent, bg=self.colors['white'], relief='solid', borderwidth=1)
         card_inner = tk.Frame(card, bg=self.colors['white'], padx=15, pady=12)
         card_inner.pack(fill='both', expand=True)
         
-        # Icon với màu
-        icon_label = tk.Label(card_inner,
+        tk.Label(card_inner,
             text=icon,
             font=('Segoe UI', 24),
             bg=self.colors['white'],
-            fg=color)
-        icon_label.pack()
+            fg=color).pack()
         
-        # Value
-        value_label = tk.Label(card_inner,
+        tk.Label(card_inner,
             textvariable=value_var,
             font=('Segoe UI', 18, 'bold'),
             bg=self.colors['white'],
-            fg=color)
-        value_label.pack()
+            fg=color).pack()
         
-        # Label
-        label_widget = tk.Label(card_inner,
+        tk.Label(card_inner,
             text=label,
             font=('Segoe UI', 9),
             bg=self.colors['white'],
-            fg='#666666')
-        label_widget.pack()
+            fg='#666666').pack()
         
         return card
-    
-    def create_form_field(self, parent, label_text, var, row, col, readonly=False, width=20):
-        """Tạo field trong form"""
-        # Label
-        tk.Label(parent,
-            text=label_text,
-            font=('Segoe UI', 10, 'bold'),
-            bg=self.colors['white'],
-            fg=self.colors['dark']).grid(row=row, column=col, sticky='w', padx=(0, 10), pady=8)
-        
-        # Entry
-        entry = ttk.Entry(parent,
-            textvariable=var,
-            state='readonly' if readonly else 'normal',
-            width=width,
-            font=('Segoe UI', 10))
-        entry.grid(row=row, column=col+1, sticky='w', pady=8, padx=(0, 30))
-        
-        return entry
     
     def update_statistics(self):
         """Cập nhật thống kê"""
@@ -414,16 +267,13 @@ class InventoryManagerApp:
         self.total_value_var.set(format_currency(stats.get('TotalValue', 0)))
     
     def populate_tree_with_colors(self, data):
-        """Hiển thị dữ liệu với màu sắc cảnh báo"""
-        # Clear existing
+        """Hiển thị dữ liệu với màu sắc"""
         for item in self.inventory_tree.get_children():
             self.inventory_tree.delete(item)
         
-        # Add data with colors
         for row in data:
             book_id, ma_sach, ten_sach, so_luong, vi_tri = row
             
-            # Xác định trạng thái và màu
             if so_luong < 50:
                 status = "🔴 Sắp hết"
                 tag = 'danger'
@@ -438,15 +288,12 @@ class InventoryManagerApp:
                 values=(book_id, ma_sach, ten_sach, f"{so_luong:,}", vi_tri, status),
                 tags=(tag,))
         
-        # Configure tags
         self.inventory_tree.tag_configure('danger', foreground=self.colors['danger'])
         self.inventory_tree.tag_configure('warning', foreground=self.colors['warning'])
         self.inventory_tree.tag_configure('success', foreground=self.colors['success'])
     
-    # ========== EVENT HANDLERS ==========
-    
     def view_inventory_command(self):
-        """Xem toàn bộ tồn kho"""
+        """Xem tồn kho"""
         self.status_var.set("⏳ Đang tải...")
         self.master.update()
         
@@ -457,166 +304,695 @@ class InventoryManagerApp:
             self.status_var.set(f"✅ Đã tải {len(data)} sản phẩm")
         except Exception as e:
             self.status_var.set(f"❌ Lỗi: {str(e)}")
-            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu: {str(e)}")
     
     def apply_filter(self):
-        """Áp dụng bộ lọc"""
+        """Áp dụng lọc"""
         location = self.filter_location_var.get()
-        sort_by = self.sort_by_var.get()
         
-        # Get data
         if location == "Tất cả":
             data = self.db.view_inventory()
         else:
-            data = self.db.filter_inventory_by_location(location)
-        
-        # Sort data
-        data = self.db.sort_inventory(sort_by) if hasattr(self.db, 'sort_inventory') else data
+            # Lọc theo vị trí
+            all_data = self.db.view_inventory()
+            data = [row for row in all_data if row[4] == location]
         
         self.populate_tree_with_colors(data)
         self.status_var.set(f"✅ Hiển thị {len(data)} sản phẩm")
     
     def on_tree_select(self, event):
-        """Khi chọn dòng trong bảng"""
+        """Khi chọn dòng"""
         selection = self.inventory_tree.selection()
         if selection:
             item = self.inventory_tree.item(selection[0])
             values = item['values']
             
-            self.selected_inventory_record = (values[0], values[1], values[2], 
-                                             int(str(values[3]).replace(',', '')), values[4])
-            
-            self.book_id_text.set(values[1])
-            self.book_name_text.set(values[2])
-            self.quantity_text.set(str(values[3]).replace(',', ''))
-            self.location_text.set(values[4])
+            self.selected_inventory_record = (
+                values[0], values[1], values[2],
+                int(str(values[3]).replace(',', '')), values[4]
+            )
     
     def on_double_click(self, event):
-        """Double click để xem chi tiết"""
-        selection = self.inventory_tree.selection()
-        if selection:
-            item = self.inventory_tree.item(selection[0])
-            values = item['values']
-            
-            # Lấy thông tin sách đầy đủ
-            book = self.db.get_book_by_id(values[0])
-            if book:
-                detail_msg = f"""
-╔══════════════════════════════════════╗
-║        CHI TIẾT SÁCH TRONG KHO       ║
-╚══════════════════════════════════════╝
-
-📚 Mã sách: {values[1]}
-📖 Tên sách: {values[2]}
-✍️ Tác giả: {book[3]}
-📂 Lĩnh vực: {book[4]}
-🏢 NXB: {book[6]}
-💵 Giá bìa: {format_currency(book[8])}
-📦 Số lượng tồn: {values[3]} quyển
-📍 Vị trí: {values[4]}
-📊 Trạng thái: {values[5]}
-                """
-                messagebox.showinfo("Thông tin chi tiết", detail_msg)
-    
-    def stock_in_command(self):
-        """Nhập kho"""
+        """Double click xem chi tiết"""
         if not self.selected_inventory_record:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn sách từ danh sách!")
             return
         
-        try:
-            quantity = int(self.quantity_text.get().replace(',', ''))
-            if quantity <= 0:
-                messagebox.showerror("Lỗi", "Số lượng phải > 0!")
-                return
-            
-            location = self.location_text.get().strip()
-            if not location:
-                messagebox.showerror("Lỗi", "Vui lòng nhập vị trí kho!")
-                return
-            
-            book_id = self.selected_inventory_record[0]
-            success, result = self.db.update_inventory_quantity(book_id, quantity, location, "Admin")
-            
-            if success:
-                messagebox.showinfo("Thành công", 
-                    f"✅ Đã nhập {quantity:,} quyển vào kho!\n"
-                    f"📦 Tồn kho mới: {result:,} quyển")
-                self.view_inventory_command()
-                self.clear_form()
-            else:
-                messagebox.showerror("Lỗi", f"❌ {result}")
-        
-        except ValueError:
-            messagebox.showerror("Lỗi", "Số lượng không hợp lệ!")
+        book = self.db.get_book_by_id(self.selected_inventory_record[0])
+        if book:
+            self.show_detail_popup(self.selected_inventory_record, book)
     
-    def stock_out_command(self):
-        """Xuất kho"""
-        if not self.selected_inventory_record:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn sách từ danh sách!")
-            return
+    def show_detail_popup(self, inv_record, book):
+        """Hiển thị popup chi tiết"""
+        popup = tk.Toplevel(self.master)
+        popup.title("📋 Thông tin chi tiết")
+        popup.transient(self.master)
+        popup.grab_set()
+        center_window(popup, 500, 450)
+        popup.resizable(False, False)
         
-        try:
-            quantity = int(self.quantity_text.get().replace(',', ''))
-            if quantity <= 0:
-                messagebox.showerror("Lỗi", "Số lượng phải > 0!")
-                return
-            
-            location = self.location_text.get().strip()
-            book_id = self.selected_inventory_record[0]
-            
-            # Confirm
-            if not messagebox.askyesno("Xác nhận", 
-                f"Bạn có chắc muốn xuất {quantity:,} quyển?\n"
-                f"📚 {self.book_name_text.get()}"):
-                return
-            
-            success, result = self.db.update_inventory_quantity(book_id, -quantity, location, "Admin")
-            
-            if success:
-                messagebox.showinfo("Thành công",
-                    f"✅ Đã xuất {quantity:,} quyển khỏi kho!\n"
-                    f"📦 Tồn kho còn: {result:,} quyển")
-                self.view_inventory_command()
-                self.clear_form()
-            else:
-                messagebox.showerror("Lỗi", f"❌ {result}")
+        # Header
+        header = tk.Frame(popup, bg=self.colors['primary'], pady=15)
+        header.pack(fill='x')
         
-        except ValueError:
-            messagebox.showerror("Lỗi", "Số lượng không hợp lệ!")
+        tk.Label(header,
+            text="📋 CHI TIẾT SÁCH TRONG KHO",
+            font=('Segoe UI', 14, 'bold'),
+            fg='white',
+            bg=self.colors['primary']).pack()
+        
+        # Content
+        content = tk.Frame(popup, bg='white', padx=30, pady=20)
+        content.pack(fill='both', expand=True)
+        
+        info_items = [
+            ("📚 Mã sách:", inv_record[1]),
+            ("📖 Tên sách:", inv_record[2]),
+            ("✍️ Tác giả:", book[3]),
+            ("📂 Lĩnh vực:", book[4]),
+            ("📚 Loại sách:", book[5]),
+            ("🏢 Nhà xuất bản:", book[6]),
+            ("💵 Giá mua:", format_currency(book[7])),
+            ("💰 Giá bìa:", format_currency(book[8])),
+            ("📦 Số lượng tồn:", f"{inv_record[3]:,} quyển"),
+            ("📍 Vị trí kho:", inv_record[4]),
+        ]
+        
+        for label, value in info_items:
+            row_frame = tk.Frame(content, bg='white')
+            row_frame.pack(fill='x', pady=5)
+            
+            tk.Label(row_frame,
+                text=label,
+                font=('Segoe UI', 10, 'bold'),
+                bg='white',
+                fg='#555',
+                width=18,
+                anchor='w').pack(side='left')
+            
+            tk.Label(row_frame,
+                text=value,
+                font=('Segoe UI', 10),
+                bg='white',
+                fg='#000',
+                anchor='w').pack(side='left', fill='x', expand=True)
+        
+        # Footer
+        footer = tk.Frame(popup, bg='white', pady=15)
+        footer.pack(fill='x')
+        
+        tk.Button(footer,
+            text="✅ Đóng",
+            command=popup.destroy,
+            font=('Segoe UI', 10, 'bold'),
+            bg=self.colors['info'],
+            fg='white',
+            bd=0,
+            padx=30,
+            pady=10,
+            cursor='hand2').pack()
     
     def search_inventory_command(self):
-        """Tìm kiếm nhanh"""
-        from tkinter import simpledialog
+        """Tìm kiếm - POPUP ĐƠN GIẢN"""
+        search_popup = tk.Toplevel(self.master)
+        search_popup.title("🔍 Tìm kiếm trong kho")
+        search_popup.transient(self.master)
+        search_popup.grab_set()
+        center_window(search_popup, 900, 550)
         
-        query = simpledialog.askstring("Tìm kiếm", 
-            "Nhập từ khóa tìm kiếm:\n(Mã sách hoặc Tên sách)",
-            parent=self.master)
+        # Header
+        header = tk.Frame(search_popup, bg=self.colors['warning'], pady=15)
+        header.pack(fill='x')
         
-        if query:
-            self.status_var.set("🔍 Đang tìm kiếm...")
-            self.master.update()
+        tk.Label(header,
+            text="🔍 TÌM KIẾM TRONG KHO",
+            font=('Segoe UI', 16, 'bold'),
+            fg='white',
+            bg=self.colors['warning']).pack()
+        
+        # Search input
+        search_frame = tk.Frame(search_popup, bg='white', padx=20, pady=15)
+        search_frame.pack(fill='x')
+        
+        tk.Label(search_frame,
+            text="Nhập từ khóa (Mã sách hoặc Tên sách):",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white').pack(anchor='w', pady=(0, 5))
+        
+        search_var = tk.StringVar()
+        search_entry = tk.Entry(search_frame,
+            textvariable=search_var,
+            font=('Segoe UI', 12),
+            bd=2,
+            relief='solid')
+        search_entry.pack(fill='x', ipady=8)
+        search_entry.focus()
+        
+        # Results table
+        results_container = tk.Frame(search_popup, bg='white', padx=20, pady=10)
+        results_container.pack(fill='both', expand=True)
+        
+        scroll_y = ttk.Scrollbar(results_container, orient='vertical')
+        
+        results_tree = ttk.Treeview(results_container,
+            columns=("ID", "MaSach", "TenSach", "SoLuong", "ViTri"),
+            show='headings',
+            yscrollcommand=scroll_y.set,
+            selectmode='browse',
+            style="Inventory.Treeview")
+        
+        scroll_y.config(command=results_tree.yview)
+        
+        results_tree.heading("ID", text="ID")
+        results_tree.heading("MaSach", text="Mã Sách")
+        results_tree.heading("TenSach", text="Tên Sách")
+        results_tree.heading("SoLuong", text="SL Tồn")
+        results_tree.heading("ViTri", text="Vị Trí")
+        
+        results_tree.column("ID", width=60, anchor='center')
+        results_tree.column("MaSach", width=100, anchor='center')
+        results_tree.column("TenSach", width=350, anchor='w')
+        results_tree.column("SoLuong", width=100, anchor='center')
+        results_tree.column("ViTri", width=100, anchor='center')
+        
+        results_tree.pack(side='left', fill='both', expand=True)
+        scroll_y.pack(side='right', fill='y')
+        
+        def do_search(*args):
+            """Thực hiện tìm kiếm"""
+            keyword = search_var.get().strip()
             
-            results = self.db.search_inventory_for_suggestion(query)
+            # Xóa kết quả cũ
+            for item in results_tree.get_children():
+                results_tree.delete(item)
             
-            if results:
-                self.populate_tree_with_colors(results)
-                self.status_var.set(f"✅ Tìm thấy {len(results)} kết quả")
-            else:
-                self.populate_tree_with_colors([])
-                self.status_var.set("❌ Không tìm thấy kết quả")
-                messagebox.showinfo("Kết quả", f"Không tìm thấy sách với từ khóa: '{query}'")
+            if not keyword:
+                return
+            
+            # Tìm kiếm
+            data = self.db.view_inventory()
+            results = [row for row in data 
+                      if keyword.lower() in str(row[1]).lower() 
+                      or keyword.lower() in str(row[2]).lower()]
+            
+            # Hiển thị kết quả
+            for row in results:
+                results_tree.insert('', 'end', values=row)
+        
+        def select_and_close():
+            """Chọn và đóng"""
+            selection = results_tree.selection()
+            
+            if not selection:
+                children = results_tree.get_children()
+                if children:
+                    results_tree.selection_set(children[0])
+                    selection = results_tree.selection()
+                else:
+                    messagebox.showwarning("Cảnh báo", 
+                        "⚠️ Vui lòng chọn một kết quả!")
+                    return
+            
+            item = results_tree.item(selection[0])
+            values = item['values']
+            
+            # Load vào main app
+            self.selected_inventory_record = (
+                values[0], values[1], values[2],
+                int(str(values[3]).replace(',', '')), values[4]
+            )
+            
+            # Highlight trong bảng chính
+            for item_id in self.inventory_tree.get_children():
+                item_values = self.inventory_tree.item(item_id)['values']
+                if str(item_values[0]) == str(values[0]):
+                    self.inventory_tree.selection_set(item_id)
+                    self.inventory_tree.see(item_id)
+                    break
+            
+            search_popup.destroy()
+            
+            messagebox.showinfo("Đã chọn",
+                f"✅ Đã chọn: {values[2]}\n"
+                f"📦 Tồn kho: {values[3]} quyển\n"
+                f"📍 Vị trí: {values[4]}\n\n"
+                f"💡 Bạn có thể click [➕ NHẬP KHO] hoặc [➖ XUẤT KHO]")
+        
+        # Bind events
+        search_var.trace_add('write', do_search)
+        results_tree.bind('<Double-1>', lambda e: select_and_close())
+        
+        # Buttons
+        btn_frame = tk.Frame(search_popup, bg='white', padx=20, pady=15)
+        btn_frame.pack(fill='x')
+        
+        tk.Button(btn_frame,
+            text="✅ Chọn",
+            command=select_and_close,
+            font=('Segoe UI', 10, 'bold'),
+            bg=self.colors['success'],
+            fg='white',
+            bd=0,
+            padx=30,
+            pady=10,
+            cursor='hand2').pack(side='left', padx=5)
+        
+        tk.Button(btn_frame,
+            text="❌ Đóng",
+            command=search_popup.destroy,
+            font=('Segoe UI', 10, 'bold'),
+            bg='#757575',
+            fg='white',
+            bd=0,
+            padx=30,
+            pady=10,
+            cursor='hand2').pack(side='left', padx=5)
+        
+        tk.Label(btn_frame,
+            text="💡 Gõ từ khóa để tìm kiếm",
+            font=('Segoe UI', 9, 'italic'),
+            bg='white',
+            fg='#666').pack(side='right')
     
-    def clear_form(self):
-        """Xóa form"""
-        self.selected_inventory_record = None
-        self.book_id_text.set("")
-        self.book_name_text.set("")
-        self.quantity_text.set("0")
-        self.location_text.set("")
-        self.status_var.set("✅ Đã xóa form")
+    def open_stock_in_popup(self):
+        """Mở popup nhập kho"""
+        if not self.selected_inventory_record:
+            messagebox.showwarning("Cảnh báo",
+                "⚠️ Vui lòng chọn sách từ danh sách trước!")
+            return
+        
+        StockInPopup(self.master, self, self.selected_inventory_record, self.db)
+    
+    def open_stock_out_popup(self):
+        """Mở popup xuất kho"""
+        if not self.selected_inventory_record:
+            messagebox.showwarning("Cảnh báo",
+                "⚠️ Vui lòng chọn sách từ danh sách trước!")
+            return
+        
+        StockOutPopup(self.master, self, self.selected_inventory_record, self.db)
     
     def return_to_menu(self):
         """Quay lại menu"""
         self.master.withdraw()
         self.main_menu.master.deiconify()
+
+
+# ========== POPUP NHẬP KHO ==========
+class StockInPopup:
+    """Popup nhập kho"""
+    
+    def __init__(self, parent, main_app, inv_record, db):
+        self.main_app = main_app
+        self.inv_record = inv_record
+        self.db = db
+        
+        self.popup = tk.Toplevel(parent)
+        self.popup.title("➕ Nhập kho")
+        self.popup.transient(parent)
+        self.popup.grab_set()
+        center_window(self.popup, 550, 500)
+        self.popup.resizable(False, False)
+        
+        self.quantity_var = tk.StringVar(value="0")
+        self.location_var = tk.StringVar(value=inv_record[4])
+        self.note_var = tk.StringVar()
+        self.new_total_var = tk.StringVar(value=f"{inv_record[3]:,}")
+        
+        self.setup_ui()
+        self.quantity_var.trace_add('write', self.calculate_new_total)
+    
+    def setup_ui(self):
+        """Setup UI"""
+        colors = self.main_app.colors
+        
+        # Header
+        header = tk.Frame(self.popup, bg=colors['success'], pady=15)
+        header.pack(fill='x')
+        
+        tk.Label(header,
+            text="➕ NHẬP KHO",
+            font=('Segoe UI', 16, 'bold'),
+            fg='white',
+            bg=colors['success']).pack()
+        
+        # Content
+        content = tk.Frame(self.popup, bg='white', padx=30, pady=20)
+        content.pack(fill='both', expand=True)
+        
+        # Info
+        info_frame = tk.LabelFrame(content,
+            text=" 📚 Thông tin sách ",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white',
+            fg=colors['primary'],
+            padx=15,
+            pady=10)
+        info_frame.pack(fill='x', pady=(0, 20))
+        
+        tk.Label(info_frame,
+            text=f"Mã sách: {self.inv_record[1]}",
+            font=('Segoe UI', 10),
+            bg='white',
+            anchor='w').pack(fill='x')
+        
+        tk.Label(info_frame,
+            text=f"Tên sách: {self.inv_record[2]}",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white',
+            fg=colors['dark'],
+            anchor='w').pack(fill='x', pady=5)
+        
+        tk.Label(info_frame,
+            text=f"Tồn hiện tại: {self.inv_record[3]:,} quyển",
+            font=('Segoe UI', 11, 'bold'),
+            bg='white',
+            fg=colors['warning'],
+            anchor='w').pack(fill='x')
+        
+        # Form
+        form_frame = tk.LabelFrame(content,
+            text=" ➕ Thông tin nhập kho ",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white',
+            fg=colors['success'],
+            padx=15,
+            pady=10)
+        form_frame.pack(fill='x', pady=(0, 20))
+        
+        tk.Label(form_frame,
+            text="Số lượng nhập:",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white').pack(anchor='w', pady=(0, 5))
+        
+        quantity_entry = tk.Entry(form_frame,
+            textvariable=self.quantity_var,
+            font=('Segoe UI', 12),
+            bd=2,
+            relief='solid')
+        quantity_entry.pack(fill='x', ipady=8, pady=(0, 15))
+        quantity_entry.focus()
+        
+        tk.Label(form_frame,
+            text="Vị trí kho:",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white').pack(anchor='w', pady=(0, 5))
+        
+        location_combo = ttk.Combobox(form_frame,
+            textvariable=self.location_var,
+            values=["Kệ A1", "Kệ A2", "Kệ B1", "Kệ B2", "Kệ C1", "Kệ C2", "Kệ C3", "Kệ D1", "Kệ D2", "Kệ D3", "Kệ D4"],
+            font=('Segoe UI', 11),
+            state='normal')
+        location_combo.pack(fill='x', ipady=5, pady=(0, 15))
+        
+        tk.Label(form_frame,
+            text="Ghi chú:",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white').pack(anchor='w', pady=(0, 5))
+        
+        tk.Entry(form_frame,
+            textvariable=self.note_var,
+            font=('Segoe UI', 10),
+            bd=2,
+            relief='solid').pack(fill='x', ipady=6)
+        
+        # Result
+        result_frame = tk.Frame(content, bg='#E8F5E9', padx=15, pady=12, relief='solid', bd=1)
+        result_frame.pack(fill='x', pady=(0, 20))
+        
+        tk.Label(result_frame,
+            text="📊 Tồn kho sau khi nhập:",
+            font=('Segoe UI', 10, 'bold'),
+            bg='#E8F5E9',
+            fg=colors['success']).pack(anchor='w')
+        
+        self.result_label = tk.Label(result_frame,
+            textvariable=self.new_total_var,
+            font=('Segoe UI', 18, 'bold'),
+            bg='#E8F5E9',
+            fg=colors['success'])
+        self.result_label.pack(anchor='w')
+        
+        # Buttons
+        btn_frame = tk.Frame(content, bg='white')
+        btn_frame.pack(fill='x')
+        
+        tk.Button(btn_frame,
+            text="✅ XÁC NHẬN NHẬP KHO",
+            command=self.confirm_stock_in,
+            font=('Segoe UI', 11, 'bold'),
+            bg=colors['success'],
+            fg='white',
+            bd=0,
+            padx=20,
+            pady=12,
+            cursor='hand2').pack(side='left', padx=(0, 10), expand=True, fill='x')
+        
+        tk.Button(btn_frame,
+            text="❌ HỦY",
+            command=self.popup.destroy,
+            font=('Segoe UI', 11, 'bold'),
+            bg='#757575',
+            fg='white',
+            bd=0,
+            padx=20,
+            pady=12,
+            cursor='hand2').pack(side='left', expand=True, fill='x')
+    
+    def calculate_new_total(self, *args):
+        """Tính tổng"""
+        try:
+            quantity = int(self.quantity_var.get() or 0)
+            if quantity < 0:
+                quantity = 0
+            new_total = self.inv_record[3] + quantity
+            self.new_total_var.set(f"{self.inv_record[3]:,} + {quantity:,} = {new_total:,} quyển")
+        except:
+            self.new_total_var.set(f"{self.inv_record[3]:,} quyển")
+    
+    def confirm_stock_in(self):
+        """Xác nhận"""
+        try:
+            quantity = int(self.quantity_var.get())
+            if quantity <= 0:
+                messagebox.showerror("Lỗi", "❌ Số lượng phải lớn hơn 0!")
+                return
+            
+            location = self.location_var.get().strip()
+            if not location:
+                messagebox.showerror("Lỗi", "❌ Vui lòng chọn vị trí kho!")
+                return
+            
+            if not messagebox.askyesno("Xác nhận",
+                f"Bạn có chắc muốn nhập {quantity:,} quyển vào kho?\n\n"
+                f"📚 {self.inv_record[2]}\n"
+                f"📦 Tồn hiện tại: {self.inv_record[3]:,}\n"
+                f"➕ Nhập thêm: {quantity:,}\n"
+                f"📊 Tồn mới: {self.inv_record[3] + quantity:,}"):
+                return
+            
+            success, result = self.db.update_inventory_quantity(
+                self.inv_record[0], quantity, location, "Admin")
+            
+            if success:
+                messagebox.showinfo("Thành công",
+                    f"✅ Đã nhập {quantity:,} quyển vào kho!\n"
+                    f"📦 Tồn kho mới: {result:,} quyển")
+                self.popup.destroy()
+                self.main_app.view_inventory_command()
+            else:
+                messagebox.showerror("Lỗi", f"❌ {result}")
+        
+        except ValueError:
+            messagebox.showerror("Lỗi", "❌ Số lượng không hợp lệ!")
+
+
+# ========== POPUP XUẤT KHO ==========
+class StockOutPopup:
+    """Popup xuất kho"""
+    
+    def __init__(self, parent, main_app, inv_record, db):
+        self.main_app = main_app
+        self.inv_record = inv_record
+        self.db = db
+        
+        self.popup = tk.Toplevel(parent)
+        self.popup.title("➖ Xuất kho")
+        self.popup.transient(parent)
+        self.popup.grab_set()
+        center_window(self.popup, 550, 500)
+        self.popup.resizable(False, False)
+        
+        self.quantity_var = tk.StringVar(value="0")
+        self.location_var = tk.StringVar(value=inv_record[4])
+        self.note_var = tk.StringVar()
+        self.new_total_var = tk.StringVar(value=f"{inv_record[3]:,}")
+        
+        self.setup_ui()
+        self.quantity_var.trace_add('write', self.calculate_new_total)
+    
+    def setup_ui(self):
+        """Setup UI"""
+        colors = self.main_app.colors
+        
+        header = tk.Frame(self.popup, bg=colors['danger'], pady=15)
+        header.pack(fill='x')
+        
+        tk.Label(header,
+            text="➖ XUẤT KHO",
+            font=('Segoe UI', 16, 'bold'),
+            fg='white',
+            bg=colors['danger']).pack()
+        
+        content = tk.Frame(self.popup, bg='white', padx=30, pady=20)
+        content.pack(fill='both', expand=True)
+        
+        info_frame = tk.LabelFrame(content,
+            text=" 📚 Thông tin sách ",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white',
+            fg=colors['primary'],
+            padx=15,
+            pady=10)
+        info_frame.pack(fill='x', pady=(0, 20))
+        
+        tk.Label(info_frame,
+            text=f"Mã sách: {self.inv_record[1]}",
+            font=('Segoe UI', 10),
+            bg='white').pack(fill='x')
+        
+        tk.Label(info_frame,
+            text=f"Tên sách: {self.inv_record[2]}",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white',
+            fg=colors['dark']).pack(fill='x', pady=5)
+        
+        tk.Label(info_frame,
+            text=f"Tồn hiện tại: {self.inv_record[3]:,} quyển",
+            font=('Segoe UI', 11, 'bold'),
+            bg='white',
+            fg=colors['warning']).pack(fill='x')
+        
+        form_frame = tk.LabelFrame(content,
+            text=" ➖ Thông tin xuất kho ",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white',
+            fg=colors['danger'],
+            padx=15,
+            pady=10)
+        form_frame.pack(fill='x', pady=(0, 20))
+        
+        tk.Label(form_frame,
+            text="Số lượng xuất:",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white').pack(anchor='w', pady=(0, 5))
+        
+        quantity_entry = tk.Entry(form_frame,
+            textvariable=self.quantity_var,
+            font=('Segoe UI', 12),
+            bd=2,
+            relief='solid')
+        quantity_entry.pack(fill='x', ipady=8, pady=(0, 15))
+        quantity_entry.focus()
+        
+        tk.Label(form_frame,
+            text="Ghi chú:",
+            font=('Segoe UI', 10, 'bold'),
+            bg='white').pack(anchor='w', pady=(0, 5))
+        
+        tk.Entry(form_frame,
+            textvariable=self.note_var,
+            font=('Segoe UI', 10),
+            bd=2,
+            relief='solid').pack(fill='x', ipady=6)
+        
+        result_frame = tk.Frame(content, bg='#FFEBEE', padx=15, pady=12, relief='solid', bd=1)
+        result_frame.pack(fill='x', pady=(0, 20))
+        
+        tk.Label(result_frame,
+            text="📊 Tồn kho sau khi xuất:",
+            font=('Segoe UI', 10, 'bold'),
+            bg='#FFEBEE',
+            fg=colors['danger']).pack(anchor='w')
+        
+        self.result_label = tk.Label(result_frame,
+            textvariable=self.new_total_var,
+            font=('Segoe UI', 18, 'bold'),
+            bg='#FFEBEE',
+            fg=colors['danger'])
+        self.result_label.pack(anchor='w')
+        
+        btn_frame = tk.Frame(content, bg='white')
+        btn_frame.pack(fill='x')
+        
+        tk.Button(btn_frame,
+            text="✅ XÁC NHẬN XUẤT KHO",
+            command=self.confirm_stock_out,
+            font=('Segoe UI', 11, 'bold'),
+            bg=colors['danger'],
+            fg='white',
+            bd=0,
+            padx=20,
+            pady=12,
+            cursor='hand2').pack(side='left', padx=(0, 10), expand=True, fill='x')
+        
+        tk.Button(btn_frame,
+            text="❌ HỦY",
+            command=self.popup.destroy,
+            font=('Segoe UI', 11, 'bold'),
+            bg='#757575',
+            fg='white',
+            bd=0,
+            padx=20,
+            pady=12,
+            cursor='hand2').pack(side='left', expand=True, fill='x')
+    
+    def calculate_new_total(self, *args):
+        """Tính tổng"""
+        try:
+            quantity = int(self.quantity_var.get() or 0)
+            if quantity < 0:
+                quantity = 0
+            new_total = self.inv_record[3] - quantity
+            if new_total < 0:
+                self.new_total_var.set(f"❌ Không đủ hàng!")
+                self.result_label.config(fg='red')
+            else:
+                self.new_total_var.set(f"{self.inv_record[3]:,} - {quantity:,} = {new_total:,} quyển")
+                self.result_label.config(fg=self.main_app.colors['danger'])
+        except:
+            self.new_total_var.set(f"{self.inv_record[3]:,} quyển")
+    
+    def confirm_stock_out(self):
+        """Xác nhận"""
+        try:
+            quantity = int(self.quantity_var.get())
+            if quantity <= 0:
+                messagebox.showerror("Lỗi", "❌ Số lượng phải lớn hơn 0!")
+                return
+            
+            if quantity > self.inv_record[3]:
+                messagebox.showerror("Lỗi",
+                    f"❌ Số lượng xuất ({quantity:,}) lớn hơn tồn kho ({self.inv_record[3]:,})!")
+                return
+            
+            if not messagebox.askyesno("Xác nhận",
+                f"Bạn có chắc muốn xuất {quantity:,} quyển khỏi kho?\n\n"
+                f"📚 {self.inv_record[2]}\n"
+                f"📦 Tồn hiện tại: {self.inv_record[3]:,}\n"
+                f"➖ Xuất ra: {quantity:,}\n"
+                f"📊 Tồn còn: {self.inv_record[3] - quantity:,}"):
+                return
+            
+            success, result = self.db.update_inventory_quantity(
+                self.inv_record[0], -quantity, self.location_var.get(), "Admin")
+            
+            if success:
+                messagebox.showinfo("Thành công",
+                    f"✅ Đã xuất {quantity:,} quyển khỏi kho!\n"
+                    f"📦 Tồn kho còn: {result:,} quyển")
+                self.popup.destroy()
+                self.main_app.view_inventory_command()
+            else:
+                messagebox.showerror("Lỗi", f"❌ {result}")
+        
+        except ValueError:
+            messagebox.showerror("Lỗi", "❌ Số lượng không hợp lệ!")
