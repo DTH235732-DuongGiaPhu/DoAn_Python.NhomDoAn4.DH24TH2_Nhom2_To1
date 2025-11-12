@@ -1500,8 +1500,24 @@ class ReportPopup:
             bg='white',
             fg=colors['primary']).pack(anchor='w', pady=(10, 15))
         
-        books_frame = tk.Frame(self.content, bg='white')
-        books_frame.pack(fill='both', expand=True)
+        # Container với scrollbar
+        books_container = tk.Frame(self.content, bg='white')
+        books_container.pack(fill='both', expand=True)
+        
+        canvas = tk.Canvas(books_container, bg='white', highlightthickness=0)
+        scrollbar = tk.Scrollbar(books_container, orient='vertical', command=canvas.yview)
+        books_frame = tk.Frame(canvas, bg='white')
+        
+        books_frame.bind(
+            '<Configure>',
+            lambda e: canvas.configure(scrollregion=canvas.bbox('all'))
+        )
+        
+        canvas.create_window((0, 0), window=books_frame, anchor='nw')
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        canvas.pack(side='left', fill='both', expand=True)
+        scrollbar.pack(side='right', fill='y')
         
         for i, book in enumerate(top_books, 1):
             book_frame = tk.Frame(books_frame, bg='#f9f9f9', pady=10, padx=15)

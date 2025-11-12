@@ -2,508 +2,684 @@ import time
 from datetime import datetime
 
 class DatabaseManager:
-    """Quản lý dữ liệu sách và kho với tính năng nâng cao."""
+    """
+    Quản lý dữ liệu sách với SQL SERVER - Phiên bản hoàn chỉnh.
     
-    # CLASS VARIABLES - Chia sẻ giữa tất cả instances
-    mock_data = [
-        [1, 'MS001', 'Nhà Giả Kim', 'Paulo Coelho', 'Tâm Lý', 'Sách Nước Ngoài', 'NXB Văn Học', 80000, 100000, 5, '1988'],
-        [2, 'MS002', 'Đắc Nhân Tâm', 'Dale Carnegie', 'Kỹ Năng Sống', 'Sách Nước Ngoài', 'NXB Trẻ', 95500, 120000, 10, '1936'],
-        [3, 'MS003', 'Toán Cao Cấp A1', 'Nhiều Tác Giả', 'Giáo Trình', 'Sách Trong Nước', 'NXB Giáo Dục', 120000, 150000, 1, '2023'],
-        [4, 'MS004', 'Lập Trình Python Cơ Bản', 'Nguyễn Văn A', 'CNTT', 'Sách Trong Nước', 'NXB Khoa Học', 250000, 300000, 2, '2022'],
-        [5, 'MS005', 'Nghệ Thuật Bán Hàng', 'Jeffrey Gitomer', 'Kỹ Năng Sống', 'Sách Nước Ngoài', 'NXB Lao Động', 90000, 130000, 3, '2019'],
-        [6, 'MS006', 'Vật Lý Đại Cương', 'Trần Văn B', 'Giáo Trình', 'Sách Trong Nước', 'NXB Giáo Dục', 110000, 140000, 1, '2023'],
-        [7, 'MS007', 'Marketing Căn Bản', 'Philip Kotler', 'Kinh Doanh', 'Sách Nước Ngoài', 'NXB Thống Kê', 180000, 220000, 14, '2015'],
-        [8, 'MS008', 'Tiếng Anh Giao Tiếp', 'Oxford', 'Ngoại Ngữ', 'Sách Nước Ngoài', 'NXB Tổng Hợp', 150000, 180000, 3, '2021'],
-    ]
-    
-    mock_inventory = {
-        1: (1, 'MS001', 'Nhà Giả Kim', 45, 'Kệ A1'),
-        2: (2, 'MS002', 'Đắc Nhân Tâm', 150, 'Kệ A1'),
-        3: (3, 'MS003', 'Toán Cao Cấp A1', 200, 'Kệ B2'),
-        4: (4, 'MS004', 'Lập Trình Python Cơ Bản', 80, 'Kệ C3'),
-        5: (5, 'MS005', 'Nghệ Thuật Bán Hàng', 100, 'Kệ D4'),
-        6: (6, 'MS006', 'Vật Lý Đại Cương', 120, 'Kệ B2'),
-        7: (7, 'MS007', 'Marketing Căn Bản', 30, 'Kệ C3'),
-        8: (8, 'MS008', 'Tiếng Anh Giao Tiếp', 65, 'Kệ A1'),
-    }
-    
-    transaction_history = [
-        (datetime.now(), 1, 'Nhập kho', 50, 4000000, 'Admin', 'Nhập đợt đầu'),
-        (datetime.now(), 1, 'Xuất kho', -5, -400000, 'Nhân viên 1', 'Bán lẻ'),
-        (datetime.now(), 2, 'Nhập kho', 150, 14325000, 'Admin', 'Nhập đợt đầu'),
-    ]
-    
-    last_book_id = 8
-    
-    mock_orders = [
-        (1, 'DH001', 'Nguyễn Văn A', '0901234567', 'nguyenvana@gmail.com', '123 Đường ABC, TP.HCM', '2025-11-10', 500000, 'Hoàn thành', 'Admin'),
-        (2, 'DH002', 'Trần Thị B', '0912345678', 'tranthib@gmail.com', '456 Đường XYZ, Hà Nội', '2025-11-10', 350000, 'Đang xử lý', 'Admin'),
-        (3, 'DH003', 'Lê Văn C', '0923456789', 'levanc@gmail.com', '789 Đường DEF, Đà Nẵng', '2025-11-09', 1200000, 'Hoàn thành', 'Admin'),
-        (4, 'DH004', 'Phạm Thị D', '0934567890', 'phamthid@gmail.com', '321 Đường GHI, TP.HCM', '2025-11-09', 800000, 'Hoàn thành', 'Admin'),
-        (5, 'DH005', 'Hoàng Văn E', '0945678901', 'hoangvane@gmail.com', '654 Đường JKL, Huế', '2025-11-08', 450000, 'Đang xử lý', 'Admin'),
-    ]
-    
-    mock_order_details = [
-        (1, 1, 1, 2, 100000, 200000),
-        (2, 1, 2, 3, 100000, 300000),
-        (3, 2, 3, 2, 150000, 300000),
-        (4, 2, 1, 1, 50000, 50000),
-        (5, 3, 4, 4, 300000, 1200000),
-        (6, 4, 5, 2, 130000, 260000),
-        (7, 4, 6, 4, 135000, 540000),
-        (8, 5, 7, 2, 220000, 440000),
-        (9, 5, 8, 1, 10000, 10000),
-    ]
-    
-    last_order_id = 5
-    last_detail_id = 9
+    ✅ Tất cả thao tác LƯU THẬT vào SQL Server
+    ✅ Tương thích 100% với GUI hiện tại
+    """
     
     def __init__(self, conn):
+        """Khởi tạo với SQL Server connection"""
         self.conn = conn
+        self.cursor = conn.cursor() if conn else None
+        
+        if not self.cursor:
+            print("⚠️  WARNING: Không có kết nối database!")
     
-    # ===== BOOK INFO OPERATIONS =====
+    # ============================================================
+    # BOOK INFO OPERATIONS
+    # ============================================================
     
     def view_all(self):
-        """Xem tất cả sách"""
-        time.sleep(0.05)
-        return DatabaseManager.mock_data
+        """Xem tất cả sách từ SQL Server"""
+        if not self.cursor:
+            print("❌ Không có kết nối database!")
+            return []
+        
+        try:
+            query = """
+                SELECT 
+                    s.Id, s.MaSach, s.TenSach,
+                    ISNULL(tg.TenTacGia, N'') AS TenTacGia,
+                    ISNULL(lv.TenLinhVuc, N'') AS TenLinhVuc,
+                    ISNULL(s.LoaiSach, N'') AS LoaiSach,
+                    ISNULL(nxb.TenNXB, N'') AS TenNXB,
+                    ISNULL(s.GiaMua, 0) AS GiaMua,
+                    ISNULL(s.GiaBia, 0) AS GiaBia,
+                    ISNULL(s.LanTaiBan, 0) AS LanTaiBan,
+                    ISNULL(s.NamXB, '') AS NamXB
+                FROM Sach s
+                LEFT JOIN TacGia tg ON s.IdTacGia = tg.Id
+                LEFT JOIN LinhVuc lv ON s.IdLinhVuc = lv.Id
+                LEFT JOIN NhaXuatBan nxb ON s.IdNhaXuatBan = nxb.Id
+                ORDER BY s.Id
+            """
+            self.cursor.execute(query)
+            rows = self.cursor.fetchall()
+            
+            # Convert to list of lists
+            result = []
+            for row in rows:
+                result.append([
+                    row[0],  # Id
+                    row[1],  # MaSach
+                    row[2],  # TenSach
+                    row[3],  # TenTacGia
+                    row[4],  # TenLinhVuc
+                    row[5],  # LoaiSach
+                    row[6],  # TenNXB
+                    float(row[7]),  # GiaMua
+                    float(row[8]),  # GiaBia
+                    int(row[9]),    # LanTaiBan
+                    str(row[10])    # NamXB
+                ])
+            
+            print(f"✅ Đã tải {len(result)} sách từ database")
+            return result
+            
+        except Exception as e:
+            print(f"❌ Lỗi view_all: {e}")
+            return []
     
     def search_for_suggestion(self, query):
-        """Tìm kiếm sách"""
-        q = query.lower()
-        results = [
-            row for row in DatabaseManager.mock_data
-            if q in str(row[1]).lower() or q in str(row[2]).lower() or q in str(row[3]).lower()
-        ]
-        return results
-    
-    def get_book_by_id(self, db_id):
-        """Lấy thông tin sách theo ID"""
+        """Tìm kiếm sách (autocomplete)"""
+        if not self.cursor:
+            return []
+        
         try:
-            db_id = int(db_id)
-            for row in DatabaseManager.mock_data:
-                if row[0] == db_id:
-                    return row
+            sql = """
+                SELECT 
+                    s.Id, s.MaSach, s.TenSach,
+                    ISNULL(tg.TenTacGia, N'') AS TenTacGia
+                FROM Sach s
+                LEFT JOIN TacGia tg ON s.IdTacGia = tg.Id
+                WHERE s.MaSach LIKE ? 
+                   OR s.TenSach LIKE ? 
+                   OR tg.TenTacGia LIKE ?
+                ORDER BY s.Id
+            """
+            search_term = f'%{query}%'
+            self.cursor.execute(sql, (search_term, search_term, search_term))
+            rows = self.cursor.fetchall()
+            
+            result = []
+            for row in rows:
+                result.append([row[0], row[1], row[2], row[3]])
+            
+            return result
+            
+        except Exception as e:
+            print(f"❌ Lỗi search: {e}")
+            return []
+    
+    def get_book_by_id(self, book_id):
+        """Lấy thông tin sách theo ID"""
+        if not self.cursor:
             return None
-        except:
+        
+        try:
+            query = """
+                SELECT 
+                    s.Id, s.MaSach, s.TenSach,
+                    ISNULL(tg.TenTacGia, N'') AS TenTacGia,
+                    ISNULL(lv.TenLinhVuc, N'') AS TenLinhVuc,
+                    ISNULL(s.LoaiSach, N'') AS LoaiSach,
+                    ISNULL(nxb.TenNXB, N'') AS TenNXB,
+                    ISNULL(s.GiaMua, 0) AS GiaMua,
+                    ISNULL(s.GiaBia, 0) AS GiaBia,
+                    ISNULL(s.LanTaiBan, 0) AS LanTaiBan,
+                    ISNULL(s.NamXB, '') AS NamXB
+                FROM Sach s
+                LEFT JOIN TacGia tg ON s.IdTacGia = tg.Id
+                LEFT JOIN LinhVuc lv ON s.IdLinhVuc = lv.Id
+                LEFT JOIN NhaXuatBan nxb ON s.IdNhaXuatBan = nxb.Id
+                WHERE s.Id = ?
+            """
+            self.cursor.execute(query, (book_id,))
+            row = self.cursor.fetchone()
+            
+            if row:
+                return [
+                    row[0], row[1], row[2], row[3], row[4],
+                    row[5], row[6], float(row[7]), float(row[8]),
+                    int(row[9]), str(row[10])
+                ]
+            return None
+            
+        except Exception as e:
+            print(f"❌ Lỗi get_book_by_id: {e}")
             return None
     
     def get_inventory_stats(self):
         """Thống kê sách"""
-        total_books = len(DatabaseManager.mock_data)
-        total_quantity = sum(inv[3] for inv in DatabaseManager.mock_inventory.values())
-        low_stock_count = sum(1 for inv in DatabaseManager.mock_inventory.values() if inv[3] < 50)
+        if not self.cursor:
+            return {'TotalCount': 0, 'TotalQuantity': 0, 'LowStockCount': 0, 'TotalValue': 0}
         
-        # Tính giá trị kho (số lượng * giá mua)
-        total_value = 0
-        for book_id, inv in DatabaseManager.mock_inventory.items():
-            book = self.get_book_by_id(book_id)
-            if book:
-                total_value += inv[3] * book[7]  # SoLuongTon * GiaMua
+        try:
+            # Tổng số sách
+            self.cursor.execute("SELECT COUNT(*) FROM Sach")
+            total_count = self.cursor.fetchone()[0]
+            
+            # Tổng tồn kho
+            self.cursor.execute("SELECT ISNULL(SUM(SoLuongTon), 0) FROM TonKho")
+            total_quantity = self.cursor.fetchone()[0]
+            
+            # Sách sắp hết (< 50)
+            self.cursor.execute("SELECT COUNT(*) FROM TonKho WHERE SoLuongTon < 50")
+            low_stock = self.cursor.fetchone()[0]
+            
+            # Giá trị kho
+            self.cursor.execute("""
+                SELECT ISNULL(SUM(tk.SoLuongTon * s.GiaMua), 0)
+                FROM TonKho tk
+                JOIN Sach s ON tk.IdSach = s.Id
+            """)
+            total_value = self.cursor.fetchone()[0]
+            
+            return {
+                'TotalCount': total_count,
+                'TotalQuantity': int(total_quantity),
+                'LowStockCount': low_stock,
+                'TotalValue': float(total_value)
+            }
+            
+        except Exception as e:
+            print(f"❌ Lỗi stats: {e}")
+            return {'TotalCount': 0, 'TotalQuantity': 0, 'LowStockCount': 0, 'TotalValue': 0}
+    
+    def _get_or_create_id(self, table, name_column, name_value):
+        """Helper: Lấy hoặc tạo ID cho bảng phụ"""
+        if not name_value or not name_value.strip():
+            return None
         
-        return {
-            "TotalCount": total_books,
-            "TotalQuantity": total_quantity,
-            "LowStockCount": low_stock_count,
-            "TotalValue": total_value
-        }
+        try:
+            # Tìm xem đã tồn tại chưa
+            self.cursor.execute(f"SELECT Id FROM {table} WHERE {name_column} = ?", (name_value,))
+            row = self.cursor.fetchone()
+            
+            if row:
+                return row[0]
+            
+            # Chưa có → Thêm mới
+            self.cursor.execute(f"INSERT INTO {table} ({name_column}) VALUES (?)", (name_value,))
+            self.conn.commit()
+            
+            # Lấy ID vừa insert
+            self.cursor.execute("SELECT @@IDENTITY")
+            new_id = int(self.cursor.fetchone()[0])
+            print(f"   ➕ Đã tạo {table}: {name_value} (ID: {new_id})")
+            return new_id
+            
+        except Exception as e:
+            print(f"❌ Lỗi _get_or_create_id [{table}]: {e}")
+            return None
     
     def insert_book_full(self, ma_sach, ten_sach, tac_gia, linh_vuc, loai_sach, nxb, gia_mua, gia_bia, lan_tai_ban, nam_xb):
-        """Thêm sách mới"""
-        DatabaseManager.last_book_id += 1
-        new_book_db_id = DatabaseManager.last_book_id
+        """Thêm sách mới vào SQL Server"""
+        if not self.cursor:
+            print("❌ Không có kết nối database!")
+            return None
         
-        new_book_row = [
-            new_book_db_id, ma_sach, ten_sach, tac_gia, linh_vuc, 
-            loai_sach, nxb, float(gia_mua), float(gia_bia), 
-            int(lan_tai_ban), nam_xb
-        ]
-        
-        DatabaseManager.mock_data.append(new_book_row)
-        
-        # Tự động thêm vào kho với số lượng = 0
-        DatabaseManager.mock_inventory[new_book_db_id] = (new_book_db_id, ma_sach, ten_sach, 0, 'Chưa xác định')
-        
-        print(f"✅ Thêm sách mới ID {new_book_db_id}: {ma_sach} - {ten_sach}")
-        return new_book_db_id
+        try:
+            # Lấy/Tạo ID cho các bảng phụ
+            id_tac_gia = self._get_or_create_id('TacGia', 'TenTacGia', tac_gia)
+            id_linh_vuc = self._get_or_create_id('LinhVuc', 'TenLinhVuc', linh_vuc)
+            id_nxb = self._get_or_create_id('NhaXuatBan', 'TenNXB', nxb)
+            
+            # Insert sách
+            query = """
+                INSERT INTO Sach (MaSach, TenSach, IdTacGia, IdLinhVuc, IdNhaXuatBan, 
+                                  LoaiSach, GiaMua, GiaBia, LanTaiBan, NamXB)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            self.cursor.execute(query, (
+                ma_sach, ten_sach, id_tac_gia, id_linh_vuc, id_nxb,
+                loai_sach, float(gia_mua), float(gia_bia), int(lan_tai_ban), nam_xb
+            ))
+            
+            # Lấy ID vừa insert
+            self.cursor.execute("SELECT @@IDENTITY")
+            new_id = int(self.cursor.fetchone()[0])
+            
+            # Tự động tạo dòng tồn kho
+            self.cursor.execute("""
+                INSERT INTO TonKho (IdSach, SoLuongTon, ViTri)
+                VALUES (?, 0, N'Chưa xác định')
+            """, (new_id,))
+            
+            self.conn.commit()
+            
+            print(f"✅ Thêm sách mới ID {new_id}: {ma_sach} - {ten_sach}")
+            return new_id
+            
+        except Exception as e:
+            print(f"❌ Lỗi insert_book: {e}")
+            self.conn.rollback()
+            return None
     
-    def update_book_full(self, db_id, ma_sach, ten_sach, tac_gia, linh_vuc, loai_sach, nxb, gia_mua, gia_bia, lan_tai_ban, nam_xb):
+    def update_book_full(self, book_id, ma_sach, ten_sach, tac_gia, linh_vuc, loai_sach, nxb, gia_mua, gia_bia, lan_tai_ban, nam_xb):
         """Cập nhật thông tin sách"""
-        print(f"🔄 Cập nhật sách ID {db_id}")
+        if not self.cursor:
+            print("❌ Không có kết nối database!")
+            return
         
-        # Cập nhật trong mock_data (class variable)
-        for i, row in enumerate(DatabaseManager.mock_data):
-            if row[0] == db_id:
-                DatabaseManager.mock_data[i] = [
-                    db_id, ma_sach, ten_sach, tac_gia, linh_vuc,
-                    loai_sach, nxb, float(gia_mua), float(gia_bia),
-                    int(lan_tai_ban), nam_xb
-                ]
-                print(f"✅ Đã cập nhật thông tin sách ID {db_id}")
-                break
-        
-        # Đồng bộ Mã Sách và Tên Sách trong mock_inventory
-        if db_id in DatabaseManager.mock_inventory:
-            current_inv = list(DatabaseManager.mock_inventory[db_id])
-            current_inv[1] = ma_sach
-            current_inv[2] = ten_sach
-            DatabaseManager.mock_inventory[db_id] = tuple(current_inv)
-            print(f"✅ Đã đồng bộ tồn kho cho sách ID {db_id}")
+        try:
+            # Lấy/Tạo ID cho các bảng phụ
+            id_tac_gia = self._get_or_create_id('TacGia', 'TenTacGia', tac_gia)
+            id_linh_vuc = self._get_or_create_id('LinhVuc', 'TenLinhVuc', linh_vuc)
+            id_nxb = self._get_or_create_id('NhaXuatBan', 'TenNXB', nxb)
+            
+            # Update sách
+            query = """
+                UPDATE Sach 
+                SET MaSach = ?, TenSach = ?, IdTacGia = ?, IdLinhVuc = ?, 
+                    IdNhaXuatBan = ?, LoaiSach = ?, GiaMua = ?, GiaBia = ?, 
+                    LanTaiBan = ?, NamXB = ?, NgayCapNhat = GETDATE()
+                WHERE Id = ?
+            """
+            self.cursor.execute(query, (
+                ma_sach, ten_sach, id_tac_gia, id_linh_vuc, id_nxb,
+                loai_sach, float(gia_mua), float(gia_bia), int(lan_tai_ban), nam_xb,
+                book_id
+            ))
+            self.conn.commit()
+            
+            print(f"✅ Cập nhật sách ID {book_id} thành công!")
+            
+        except Exception as e:
+            print(f"❌ Lỗi update_book: {e}")
+            self.conn.rollback()
     
-    def delete_book(self, db_id):
-        """Xóa sách"""
-        print(f"🗑️ Xóa sách ID {db_id}")
+    def delete_book(self, book_id):
+        """Xóa sách (CASCADE delete tồn kho tự động)"""
+        if not self.cursor:
+            print("❌ Không có kết nối database!")
+            return
         
-        # Xóa khỏi mock_data
-        DatabaseManager.mock_data = [row for row in DatabaseManager.mock_data if row[0] != db_id]
-        
-        # Xóa khỏi mock_inventory
-        if db_id in DatabaseManager.mock_inventory:
-            del DatabaseManager.mock_inventory[db_id]
-            print(f"✅ Đã xóa khỏi tồn kho")
+        try:
+            query = "DELETE FROM Sach WHERE Id = ?"
+            self.cursor.execute(query, (book_id,))
+            self.conn.commit()
+            
+            print(f"✅ Xóa sách ID {book_id} thành công!")
+            
+        except Exception as e:
+            print(f"❌ Lỗi delete_book: {e}")
+            self.conn.rollback()
     
-    # ===== INVENTORY OPERATIONS =====
+    # ============================================================
+    # INVENTORY OPERATIONS
+    # ============================================================
     
     def view_inventory(self):
         """Xem tồn kho"""
-        time.sleep(0.05)
-        return list(DatabaseManager.mock_inventory.values())
+        if not self.cursor:
+            return []
+        
+        try:
+            query = """
+                SELECT 
+                    tk.IdSach,
+                    s.MaSach,
+                    s.TenSach,
+                    tk.SoLuongTon,
+                    ISNULL(tk.ViTri, N'Chưa xác định') AS ViTri
+                FROM TonKho tk
+                JOIN Sach s ON tk.IdSach = s.Id
+                ORDER BY s.MaSach
+            """
+            self.cursor.execute(query)
+            rows = self.cursor.fetchall()
+            
+            result = []
+            for row in rows:
+                result.append((row[0], row[1], row[2], row[3], row[4]))
+            
+            print(f"✅ Đã tải {len(result)} dòng tồn kho")
+            return result
+            
+        except Exception as e:
+            print(f"❌ Lỗi view_inventory: {e}")
+            return []
     
     def search_inventory_for_suggestion(self, query):
-        """Tìm kiếm sách trong kho"""
-        q = query.lower()
-        results = []
-        for row in DatabaseManager.mock_inventory.values():
-            if q in str(row[1]).lower() or q in str(row[2]).lower():
-                results.append(row)
-        return results
-    
-    def filter_inventory_by_location(self, location):
-        """Lọc tồn kho theo vị trí"""
-        if location == "Tất cả":
-            return list(DatabaseManager.mock_inventory.values())
+        """Tìm kiếm trong kho"""
+        if not self.cursor:
+            return []
         
-        results = [inv for inv in DatabaseManager.mock_inventory.values() if inv[4] == location]
-        return results
-    
-    def sort_inventory(self, sort_by="Mã sách"):
-        """Sắp xếp tồn kho"""
-        data = list(DatabaseManager.mock_inventory.values())
-        
-        if sort_by == "Mã sách":
-            data.sort(key=lambda x: x[1])
-        elif sort_by == "Tên sách":
-            data.sort(key=lambda x: x[2])
-        elif sort_by == "SL Tăng dần":
-            data.sort(key=lambda x: x[3])
-        elif sort_by == "SL Giảm dần":
-            data.sort(key=lambda x: x[3], reverse=True)
-        
-        return data
-    
-    def update_inventory_quantity(self, book_db_id, quantity_change, location, nguoi_thuc_hien="System"):
-        """Cập nhật số lượng tồn kho"""
         try:
-            book_db_id = int(book_db_id)
-            quantity_change = int(quantity_change)
-        except ValueError:
-            return False, "ID sách hoặc số lượng không hợp lệ."
-        
-        if book_db_id not in DatabaseManager.mock_inventory:
-            return False, f"Không tìm thấy sách với ID: {book_db_id} trong kho."
-        
-        current_inventory = list(DatabaseManager.mock_inventory[book_db_id])
-        current_quantity = current_inventory[3]
-        new_quantity = current_quantity + quantity_change
-        
-        if new_quantity < 0:
-            return False, f"Số lượng tồn kho không đủ ({current_quantity} < {-quantity_change})."
-        
-        # Cập nhật tồn kho
-        current_inventory[3] = new_quantity
-        if location:
-            current_inventory[4] = location
-        DatabaseManager.mock_inventory[book_db_id] = tuple(current_inventory)
-        
-        # Ghi lại lịch sử giao dịch
-        loai_gd = "Nhập kho" if quantity_change > 0 else "Xuất kho"
-        book = self.get_book_by_id(book_db_id)
-        gia_tri = abs(quantity_change) * book[7] if book else 0  # GiaMua
-        
-        DatabaseManager.transaction_history.append((
-            datetime.now(),
-            book_db_id,
-            loai_gd,
-            abs(quantity_change),
-            gia_tri,
-            nguoi_thuc_hien,
-            f"Thay đổi từ {current_quantity} → {new_quantity}"
-        ))
-        
-        print(f"{'📥' if quantity_change > 0 else '📤'} {loai_gd} ID {book_db_id}: {abs(quantity_change)} quyển, Tồn mới: {new_quantity}")
-        return True, new_quantity
+            sql = """
+                SELECT 
+                    tk.IdSach, s.MaSach, s.TenSach, tk.SoLuongTon,
+                    ISNULL(tk.ViTri, N'') AS ViTri
+                FROM TonKho tk
+                JOIN Sach s ON tk.IdSach = s.Id
+                WHERE s.MaSach LIKE ? OR s.TenSach LIKE ?
+                ORDER BY s.MaSach
+            """
+            search_term = f'%{query}%'
+            self.cursor.execute(sql, (search_term, search_term))
+            
+            result = []
+            for row in self.cursor.fetchall():
+                result.append((row[0], row[1], row[2], row[3], row[4]))
+            
+            return result
+            
+        except Exception as e:
+            print(f"❌ Lỗi search_inventory: {e}")
+            return []
     
-    def get_inventory_record_by_id(self, db_id):
-        """Lấy bản ghi tồn kho theo ID"""
+    def add_stock(self, book_id, quantity, note=""):
+        """Nhập kho sử dụng stored procedure"""
+        if not self.cursor:
+            return False
+        
         try:
-            db_id = int(db_id)
-            return DatabaseManager.mock_inventory.get(db_id)
-        except:
-            return None
+            self.cursor.execute("""
+                EXEC sp_NhapKho 
+                    @IdSach = ?, 
+                    @SoLuong = ?, 
+                    @NguoiThucHien = N'System',
+                    @GhiChu = ?
+            """, (book_id, quantity, note))
+            
+            result = self.cursor.fetchone()
+            self.conn.commit()
+            
+            if result and result[0] == 1:
+                print(f"✅ Nhập kho: +{quantity} quyển cho sách ID {book_id}")
+                return True
+            else:
+                print(f"❌ Nhập kho thất bại!")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Lỗi add_stock: {e}")
+            self.conn.rollback()
+            return False
     
-    def get_transaction_history(self, limit=20):
+    def remove_stock(self, book_id, quantity, note=""):
+        """Xuất kho sử dụng stored procedure"""
+        if not self.cursor:
+            return False
+        
+        try:
+            self.cursor.execute("""
+                EXEC sp_XuatKho 
+                    @IdSach = ?, 
+                    @SoLuong = ?, 
+                    @NguoiThucHien = N'System',
+                    @GhiChu = ?
+            """, (book_id, quantity, note))
+            
+            result = self.cursor.fetchone()
+            self.conn.commit()
+            
+            if result and result[0] == 1:
+                print(f"✅ Xuất kho: -{quantity} quyển cho sách ID {book_id}")
+                return True
+            else:
+                msg = result[1] if result else "Lỗi không xác định"
+                print(f"❌ Xuất kho thất bại: {msg}")
+                return False
+                
+        except Exception as e:
+            print(f"❌ Lỗi remove_stock: {e}")
+            self.conn.rollback()
+            return False
+    
+    def update_inventory(self, book_id, new_quantity, new_location):
+        """Cập nhật tồn kho thủ công"""
+        if not self.cursor:
+            return
+        
+        try:
+            self.cursor.execute("""
+                UPDATE TonKho 
+                SET SoLuongTon = ?, ViTri = ?, NgayCapNhat = GETDATE()
+                WHERE IdSach = ?
+            """, (new_quantity, new_location, book_id))
+            self.conn.commit()
+            
+            print(f"✅ Cập nhật tồn kho cho sách ID {book_id}")
+            
+        except Exception as e:
+            print(f"❌ Lỗi update_inventory: {e}")
+            self.conn.rollback()
+    
+    def get_transactions(self, book_id=None, limit=100):
         """Lấy lịch sử giao dịch"""
-        return DatabaseManager.transaction_history[-limit:][::-1]  # Lấy 20 giao dịch gần nhất, đảo ngược
+        if not self.cursor:
+            return []
+        
+        try:
+            if book_id:
+                query = """
+                    SELECT TOP (?) 
+                        NgayGiaoDich, IdSach, LoaiGiaoDich, SoLuong, 
+                        GiaTri, NguoiThucHien, GhiChu
+                    FROM LichSuGiaoDich
+                    WHERE IdSach = ?
+                    ORDER BY NgayGiaoDich DESC
+                """
+                self.cursor.execute(query, (limit, book_id))
+            else:
+                query = """
+                    SELECT TOP (?) 
+                        NgayGiaoDich, IdSach, LoaiGiaoDich, SoLuong, 
+                        GiaTri, NguoiThucHien, GhiChu
+                    FROM LichSuGiaoDich
+                    ORDER BY NgayGiaoDich DESC
+                """
+                self.cursor.execute(query, (limit,))
+            
+            result = []
+            for row in self.cursor.fetchall():
+                result.append(tuple(row))
+            
+            return result
+            
+        except Exception as e:
+            print(f"❌ Lỗi get_transactions: {e}")
+            return []
     
-    def get_low_stock_books(self, threshold=50):
-        """Lấy danh sách sách sắp hết (tồn kho < threshold)"""
-        low_stock = []
-        for book_id, inv in DatabaseManager.mock_inventory.items():
-            if inv[3] < threshold:
-                book = self.get_book_by_id(book_id)
-                if book:
-                    low_stock.append({
-                        'id': book_id,
-                        'ma_sach': inv[1],
-                        'ten_sach': inv[2],
-                        'so_luong': inv[3],
-                        'vi_tri': inv[4]
-                    })
-        return low_stock
-    
-    # ===== ORDER MANAGEMENT OPERATIONS =====
+    # ============================================================
+    # BUSINESS / ORDER OPERATIONS
+    # ============================================================
     
     def get_all_orders(self):
         """Lấy tất cả đơn hàng"""
-        time.sleep(0.05)
-        return list(DatabaseManager.mock_orders)
+        if not self.cursor:
+            return []
+        
+        try:
+            query = """
+                SELECT 
+                    Id, MaDonHang, TenKhachHang, SoDienThoai, Email,
+                    DiaChi, NgayDat, TongTien, TrangThai, NguoiTao
+                FROM DonHang
+                ORDER BY NgayDat DESC, Id DESC
+            """
+            self.cursor.execute(query)
+            
+            result = []
+            for row in self.cursor.fetchall():
+                result.append(tuple(row))
+            
+            return result
+            
+        except Exception as e:
+            print(f"❌ Lỗi get_all_orders: {e}")
+            return []
     
-    def get_order_by_id(self, order_id):
-        """Lấy đơn hàng theo ID"""
-        for order in DatabaseManager.mock_orders:
-            if order[0] == order_id:
-                return order
-        return None
+    def search_orders(self, query):
+        """Tìm kiếm đơn hàng"""
+        if not self.cursor:
+            return []
+        
+        try:
+            sql = """
+                SELECT 
+                    Id, MaDonHang, TenKhachHang, SoDienThoai, Email,
+                    DiaChi, NgayDat, TongTien, TrangThai, NguoiTao
+                FROM DonHang
+                WHERE MaDonHang LIKE ? OR TenKhachHang LIKE ?
+                ORDER BY NgayDat DESC
+            """
+            search_term = f'%{query}%'
+            self.cursor.execute(sql, (search_term, search_term))
+            
+            result = []
+            for row in self.cursor.fetchall():
+                result.append(tuple(row))
+            
+            return result
+            
+        except Exception as e:
+            print(f"❌ Lỗi search_orders: {e}")
+            return []
     
     def get_order_details(self, order_id):
         """Lấy chi tiết đơn hàng"""
-        details = []
-        for detail in DatabaseManager.mock_order_details:
-            if detail[1] == order_id:  # detail[1] là OrderID
-                # Lấy thông tin sách
-                book = self.get_book_by_id(detail[2])
-                if book:
-                    details.append({
-                        'DetailID': detail[0],
-                        'BookID': detail[2],
-                        'BookCode': book[1],
-                        'BookName': book[2],
-                        'Quantity': detail[3],
-                        'UnitPrice': detail[4],
-                        'Subtotal': detail[5]
-                    })
-        return details
-    
-    def create_order(self, customer_name, phone, email, address, order_items, created_by='Admin'):
-        """
-        Tạo đơn hàng mới
-        order_items: [(book_id, quantity, unit_price), ...]
-        """
-        try:
-            # Tạo mã đơn hàng
-            DatabaseManager.last_order_id += 1
-            order_code = f"DH{DatabaseManager.last_order_id:03d}"
-            
-            # Tính tổng tiền
-            total_amount = sum(item[1] * item[2] for item in order_items)
-            
-            # Tạo đơn hàng
-            order_date = datetime.now().strftime('%Y-%m-%d')
-            new_order = (
-                DatabaseManager.last_order_id,
-                order_code,
-                customer_name,
-                phone,
-                email or '',
-                address or '',
-                order_date,
-                total_amount,
-                'Đang xử lý',
-                created_by
-            )
-            
-            # Thêm vào mock_orders
-            DatabaseManager.mock_orders = list(DatabaseManager.mock_orders) + [new_order]
-            
-            # Tạo chi tiết đơn hàng
-            for book_id, quantity, unit_price in order_items:
-                DatabaseManager.last_detail_id += 1
-                subtotal = quantity * unit_price
-                
-                new_detail = (
-                    DatabaseManager.last_detail_id,
-                    DatabaseManager.last_order_id,
-                    book_id,
-                    quantity,
-                    unit_price,
-                    subtotal
-                )
-                DatabaseManager.mock_order_details = list(DatabaseManager.mock_order_details) + [new_detail]
-                
-                # Trừ kho
-                if book_id in DatabaseManager.mock_inventory:
-                    inv = list(DatabaseManager.mock_inventory[book_id])
-                    inv[3] -= quantity  # Trừ số lượng tồn
-                    DatabaseManager.mock_inventory[book_id] = tuple(inv)
-            
-            return True, order_code
+        if not self.cursor:
+            return []
         
+        try:
+            query = """
+                SELECT 
+                    ct.IdSach,
+                    s.MaSach,
+                    s.TenSach,
+                    ct.SoLuong,
+                    ct.DonGia,
+                    ct.ThanhTien
+                FROM ChiTietDonHang ct
+                JOIN Sach s ON ct.IdSach = s.Id
+                WHERE ct.IdDonHang = ?
+            """
+            self.cursor.execute(query, (order_id,))
+            
+            details = []
+            for row in self.cursor.fetchall():
+                details.append({
+                    'BookID': row[0],
+                    'BookCode': row[1],
+                    'BookName': row[2],
+                    'Quantity': row[3],
+                    'UnitPrice': float(row[4]),
+                    'Subtotal': float(row[5])
+                })
+            
+            return details
+            
         except Exception as e:
-            return False, str(e)
+            print(f"❌ Lỗi get_order_details: {e}")
+            return []
     
     def update_order_status(self, order_id, new_status):
-        """Cập nhật trạng thái đơn hàng"""
+        """Cập nhật trạng thái đơn"""
+        if not self.cursor:
+            return False
+        
         try:
-            updated_orders = []
-            for order in DatabaseManager.mock_orders:
-                if order[0] == order_id:
-                    # Tạo tuple mới với status mới
-                    updated_order = list(order)
-                    updated_order[8] = new_status  # Index 8 là Status
-                    updated_orders.append(tuple(updated_order))
-                else:
-                    updated_orders.append(order)
+            self.cursor.execute("""
+                UPDATE DonHang 
+                SET TrangThai = ?, NgayCapNhat = GETDATE()
+                WHERE Id = ?
+            """, (new_status, order_id))
+            self.conn.commit()
             
-            DatabaseManager.mock_orders = tuple(updated_orders)
-            return True, "Cập nhật thành công"
+            print(f"✅ Cập nhật trạng thái đơn {order_id}: {new_status}")
+            return True
+            
         except Exception as e:
-            return False, str(e)
+            print(f"❌ Lỗi update_order_status: {e}")
+            self.conn.rollback()
+            return False
     
-    def delete_order(self, order_id):
-        """Xóa/Hủy đơn hàng"""
+    def get_revenue_stats(self):
+        """Thống kê doanh thu chi tiết"""
+        if not self.cursor:
+            return {
+                'TotalOrders': 0,
+                'CompletedOrders': 0,
+                'ProcessingOrders': 0,
+                'TotalRevenue': 0,
+                'AvgRevenue': 0
+            }
+        
         try:
-            # Cập nhật trạng thái thành "Đã hủy"
-            return self.update_order_status(order_id, "Đã hủy")
+            query = """
+                SELECT 
+                    COUNT(*) AS TotalOrders,
+                    SUM(CASE WHEN TrangThai = N'Hoàn thành' THEN 1 ELSE 0 END) AS Completed,
+                    SUM(CASE WHEN TrangThai = N'Đang xử lý' THEN 1 ELSE 0 END) AS Processing,
+                    ISNULL(SUM(CASE WHEN TrangThai = N'Hoàn thành' THEN TongTien ELSE 0 END), 0) AS Revenue
+                FROM DonHang
+            """
+            self.cursor.execute(query)
+            row = self.cursor.fetchone()
+            
+            total = row[0] or 0
+            completed = row[1] or 0
+            processing = row[2] or 0
+            revenue = float(row[3] or 0)
+            avg = revenue / completed if completed > 0 else 0
+            
+            return {
+                'TotalOrders': total,
+                'CompletedOrders': completed,
+                'ProcessingOrders': processing,
+                'TotalRevenue': revenue,
+                'AvgRevenue': avg
+            }
+            
         except Exception as e:
-            return False, str(e)
-    
-    def search_orders(self, keyword):
-        """Tìm kiếm đơn hàng"""
-        results = []
-        keyword_lower = keyword.lower()
-        
-        for order in DatabaseManager.mock_orders:
-            if (keyword_lower in order[1].lower() or  # OrderCode
-                keyword_lower in order[2].lower() or  # CustomerName
-                keyword_lower in order[3].lower()):   # Phone
-                results.append(order)
-        
-        return results
-    
-    def filter_orders_by_date(self, start_date, end_date):
-        """Lọc đơn hàng theo ngày"""
-        results = []
-        for order in DatabaseManager.mock_orders:
-            order_date = order[6]  # Index 6 là OrderDate
-            if start_date <= order_date <= end_date:
-                results.append(order)
-        return results
-    
-    def filter_orders_by_status(self, status):
-        """Lọc đơn hàng theo trạng thái"""
-        if status == "Tất cả":
-            return list(DatabaseManager.mock_orders)
-        
-        results = []
-        for order in DatabaseManager.mock_orders:
-            if order[8] == status:  # Index 8 là Status
-                results.append(order)
-        return results
-    
-    def get_revenue_stats(self, start_date=None, end_date=None):
-        """Lấy thống kê doanh thu"""
-        orders = DatabaseManager.mock_orders
-        
-        # Lọc theo ngày nếu có
-        if start_date and end_date:
-            orders = self.filter_orders_by_date(start_date, end_date)
-        
-        total_orders = len(orders)
-        completed_orders = len([o for o in orders if o[8] == 'Hoàn thành'])
-        processing_orders = len([o for o in orders if o[8] == 'Đang xử lý'])
-        cancelled_orders = len([o for o in orders if o[8] == 'Đã hủy'])
-        
-        # Tính doanh thu (chỉ tính đơn hoàn thành)
-        total_revenue = sum(o[7] for o in orders if o[8] == 'Hoàn thành')
-        avg_revenue = total_revenue / completed_orders if completed_orders > 0 else 0
-        
-        return {
-            'TotalOrders': total_orders,
-            'CompletedOrders': completed_orders,
-            'ProcessingOrders': processing_orders,
-            'CancelledOrders': cancelled_orders,
-            'TotalRevenue': total_revenue,
-            'AvgRevenue': avg_revenue
-        }
+            print(f"❌ Lỗi get_revenue_stats: {e}")
+            return {
+                'TotalOrders': 0,
+                'CompletedOrders': 0,
+                'ProcessingOrders': 0,
+                'TotalRevenue': 0,
+                'AvgRevenue': 0
+            }
     
     def get_top_selling_books(self, limit=5):
-        """Lấy sách bán chạy"""
-        # Đếm số lượng sách đã bán
-        book_sales = {}
+        """Lấy sách bán chạy nhất"""
+        if not self.cursor:
+            return []
         
-        for detail in DatabaseManager.mock_order_details:
-            order_id = detail[1]
-            book_id = detail[2]
-            quantity = detail[3]
+        try:
+            query = """
+                SELECT TOP (?)
+                    s.Id,
+                    s.MaSach,
+                    s.TenSach,
+                    SUM(ct.SoLuong) AS TotalSold,
+                    SUM(ct.ThanhTien) AS TotalRevenue
+                FROM ChiTietDonHang ct
+                JOIN Sach s ON ct.IdSach = s.Id
+                JOIN DonHang dh ON ct.IdDonHang = dh.Id
+                WHERE dh.TrangThai = N'Hoàn thành'
+                GROUP BY s.Id, s.MaSach, s.TenSach
+                ORDER BY SUM(ct.SoLuong) DESC
+            """
+            self.cursor.execute(query, (limit,))
             
-            # Chỉ tính đơn hoàn thành
-            order = self.get_order_by_id(order_id)
-            if order and order[8] == 'Hoàn thành':
-                if book_id not in book_sales:
-                    book_sales[book_id] = {
-                        'quantity': 0,
-                        'revenue': 0
-                    }
-                book_sales[book_id]['quantity'] += quantity
-                book_sales[book_id]['revenue'] += detail[5]  # Subtotal
-        
-        # Sắp xếp theo số lượng bán
-        sorted_books = sorted(book_sales.items(), key=lambda x: x[1]['quantity'], reverse=True)
-        
-        # Lấy thông tin chi tiết
-        results = []
-        for book_id, sales in sorted_books[:limit]:
-            book = self.get_book_by_id(book_id)
-            if book:
+            results = []
+            for row in self.cursor.fetchall():
                 results.append({
-                    'BookCode': book[1],
-                    'BookName': book[2],
-                    'QuantitySold': sales['quantity'],
-                    'Revenue': sales['revenue']
+                    'BookID': row[0],
+                    'BookCode': row[1],
+                    'BookName': row[2],
+                    'QuantitySold': int(row[3]),
+                    'Revenue': float(row[4])
                 })
-        
-        return results
-    
-    def get_daily_revenue(self, start_date, end_date):
-        """Lấy doanh thu theo ngày"""
-        from collections import defaultdict
-        
-        daily_revenue = defaultdict(float)
-        
-        orders = self.filter_orders_by_date(start_date, end_date)
-        
-        for order in orders:
-            if order[8] == 'Hoàn thành':  # Chỉ tính đơn hoàn thành
-                order_date = order[6]
-                daily_revenue[order_date] += order[7]
-        
-        # Chuyển thành list [(date, revenue), ...]
-        return sorted(daily_revenue.items())
+            
+            return results
+            
+        except Exception as e:
+            print(f"❌ Lỗi get_top_selling_books: {e}")
+            return []
 
 
+# Backward compatibility - import từ connection_manager
 def getDbConnection():
-    """Mock function for DB connection."""
-    class MockConnection:
-        def close(self): 
-            pass
-    return MockConnection()
+    """Import connection từ connection_manager"""
+    try:
+        from connection_manager import getDbConnection as get_conn
+        return get_conn()
+    except:
+        return None

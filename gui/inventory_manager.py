@@ -609,8 +609,8 @@ class StockInPopup:
         self.popup.title("➕ Nhập kho")
         self.popup.transient(parent)
         self.popup.grab_set()
-        center_window(self.popup, 550, 500)
-        self.popup.resizable(False, False)
+        center_window(self.popup, 550, 750)
+        self.popup.resizable(False, True)
         
         self.quantity_var = tk.StringVar(value="0")
         self.location_var = tk.StringVar(value=inv_record[4])
@@ -818,8 +818,8 @@ class StockOutPopup:
         self.popup.title("➖ Xuất kho")
         self.popup.transient(parent)
         self.popup.grab_set()
-        center_window(self.popup, 550, 500)
-        self.popup.resizable(False, False)
+        center_window(self.popup, 550, 750)
+        self.popup.resizable(False, True)
         
         self.quantity_var = tk.StringVar(value="0")
         self.location_var = tk.StringVar(value=inv_record[4])
