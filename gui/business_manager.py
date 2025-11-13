@@ -7,11 +7,15 @@ from utils.helpers import center_window, format_currency
 class BusinessManagerApp:
     """Ứng dụng quản lý kinh doanh - Đơn hàng & Doanh thu"""
     
-    def __init__(self, master, main_menu_instance, db_conn):
+    def __init__(self, master, main_menu_instance, db_conn, user_info=None):
         self.db = DatabaseManager(db_conn)
         self.master = master
         self.main_menu = main_menu_instance
         master.title("💼 HỆ THỐNG QUẢN LÝ KINH DOANH")
+        
+        # ✅ THÊM: Lưu thông tin user
+        self.user_info = user_info if user_info else {'username': 'System', 'full_name': 'System'}
+        self.username = self.user_info.get('username', 'System')
         
         # Biến điều khiển
         self.selected_order = None

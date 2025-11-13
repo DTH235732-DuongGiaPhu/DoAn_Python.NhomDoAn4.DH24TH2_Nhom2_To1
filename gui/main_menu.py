@@ -81,7 +81,7 @@ class MainMenuWindow:
             business_window = tk.Toplevel(self.master)
             business_window.protocol("WM_DELETE_WINDOW", self.close_business_manager)
             business_window.state('zoomed')  # Toàn màn hình
-            self.business_manager_instance = BusinessManagerApp(business_window, self, self.db_conn)
+            self.business_manager_instance = BusinessManagerApp(business_window, self, self.db_conn, self.user_info)
         else:
             self.business_manager_instance.master.state('zoomed')  # Set lại zoomed
             self.business_manager_instance.master.deiconify()

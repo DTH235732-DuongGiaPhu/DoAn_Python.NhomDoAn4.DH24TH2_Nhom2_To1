@@ -827,7 +827,7 @@ class DatabaseManager:
             print(f"❌ Lỗi get_top_selling_books: {e}")
             return []
     
-    def create_order(self, customer_name, phone, email, address, order_items):
+    def create_order(self, customer_name, phone, email, address, order_items, created_by="System"):
         """
         Tạo đơn hàng mới
         
@@ -837,6 +837,7 @@ class DatabaseManager:
             email: Email
             address: Địa chỉ
             order_items: List of (book_id, quantity, unit_price)
+            created_by: Người tạo đơn (username)
         
         Returns:
             tuple: (success: bool, order_code hoặc error_message)
@@ -855,11 +856,11 @@ class DatabaseManager:
             # Tính tổng tiền
             total_amount = sum(qty * price for _, qty, price in order_items)
             
-            # Insert đơn hàng
+            # ✅ SỬA: Dùng created_by thay vì hardcode 'System'
             self.cursor.execute("""
                 INSERT INTO DonHang (MaDonHang, TenKhachHang, SoDienThoai, Email, DiaChi, NgayDat, TongTien, TrangThai, NguoiTao)
-                VALUES (?, ?, ?, ?, ?, ?, ?, N'Đang xử lý', N'System')
-            """, (order_code, customer_name, phone, email, address, datetime.date.today(), total_amount))
+                VALUES (?, ?, ?, ?, ?, ?, ?, N'Đang xử lý', ?)
+            """, (order_code, customer_name, phone, email, address, datetime.date.today(), total_amount, created_by))
             
             # Lấy ID đơn hàng vừa tạo
             self.cursor.execute("SELECT @@IDENTITY")
@@ -876,7 +877,7 @@ class DatabaseManager:
             # Commit
             self.conn.commit()
             
-            print(f"✅ Tạo đơn hàng {order_code} thành công!")
+            print(f"✅ Tạo đơn hàng {order_code} thành công bởi {created_by}!")
             return True, order_code
             
         except Exception as e:
@@ -1081,6 +1082,7 @@ class DatabaseManager:
                 'CancelledOrders': 0,
                 'TotalRevenue': 0,
                 'CompletedRevenue': 0,
+                'ProcessingRevenue': 0,
                 'AvgRevenue': 0
             }
         
@@ -1090,24 +1092,34 @@ class DatabaseManager:
             total_orders = self.cursor.fetchone()[0]
             
             # Đơn hoàn thành
-            self.cursor.execute("SELECT COUNT(*), ISNULL(SUM(TongTien), 0) FROM DonHang WHERE TrangThai = N'Hoàn thành'")
+            self.cursor.execute("""
+                SELECT COUNT(*), ISNULL(SUM(TongTien), 0) 
+                FROM DonHang 
+                WHERE TrangThai = N'Hoàn thành'
+            """)
             row = self.cursor.fetchone()
             completed_orders = row[0]
             completed_revenue = float(row[1])
             
             # Đơn đang xử lý
-            self.cursor.execute("SELECT COUNT(*) FROM DonHang WHERE TrangThai = N'Đang xử lý'")
-            processing_orders = self.cursor.fetchone()[0]
+            self.cursor.execute("""
+                SELECT COUNT(*), ISNULL(SUM(TongTien), 0) 
+                FROM DonHang 
+                WHERE TrangThai = N'Đang xử lý'
+            """)
+            row = self.cursor.fetchone()
+            processing_orders = row[0]
+            processing_revenue = float(row[1])
             
             # Đơn đã hủy
             self.cursor.execute("SELECT COUNT(*) FROM DonHang WHERE TrangThai = N'Đã hủy'")
             cancelled_orders = self.cursor.fetchone()[0]
             
-            # Tổng doanh thu (tất cả đơn)
-            self.cursor.execute("SELECT ISNULL(SUM(TongTien), 0) FROM DonHang")
-            total_revenue = float(self.cursor.fetchone()[0])
+            # ✅ SỬA: Tổng doanh thu = CHỈ đơn hoàn thành
+            # Không tính đơn "Đang xử lý" và "Đã hủy"
+            total_revenue = completed_revenue
             
-            # Doanh thu trung bình
+            # Doanh thu trung bình (trên đơn hoàn thành)
             avg_revenue = completed_revenue / completed_orders if completed_orders > 0 else 0
             
             return {
@@ -1115,8 +1127,9 @@ class DatabaseManager:
                 'CompletedOrders': completed_orders,
                 'ProcessingOrders': processing_orders,
                 'CancelledOrders': cancelled_orders,
-                'TotalRevenue': total_revenue,
+                'TotalRevenue': total_revenue,  # ← CHỈ đơn hoàn thành
                 'CompletedRevenue': completed_revenue,
+                'ProcessingRevenue': processing_revenue,
                 'AvgRevenue': avg_revenue
             }
             
@@ -1129,6 +1142,7 @@ class DatabaseManager:
                 'CancelledOrders': 0,
                 'TotalRevenue': 0,
                 'CompletedRevenue': 0,
+                'ProcessingRevenue': 0,
                 'AvgRevenue': 0
             }
 
