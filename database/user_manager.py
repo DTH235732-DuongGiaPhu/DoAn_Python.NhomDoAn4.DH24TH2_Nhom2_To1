@@ -1,3 +1,4 @@
+# database/user_manager.py - Quản lý người dùng với SQL Server
 import hashlib
 import os
 import sys
