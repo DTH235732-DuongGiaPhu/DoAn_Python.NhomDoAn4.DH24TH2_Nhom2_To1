@@ -728,7 +728,8 @@ class CreateOrderPopup:
             self.phone_var.get().strip(),
             self.email_var.get().strip(),
             self.address_var.get().strip(),
-            order_items
+            order_items,
+            self.main_app.username  # <- Username
         )
         
         if success:
