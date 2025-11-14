@@ -1,3 +1,8 @@
+# ============================================================
+# FILE: gui/search_windows.py  
+# MỤC ĐÍCH: Cửa sổ tìm kiếm sách và tồn kho
+# ============================================================
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from utils.helpers import center_window

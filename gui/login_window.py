@@ -1,10 +1,29 @@
-# gui/login_window.py - Cửa sổ đăng nhập
+# ============================================================
+# FILE: gui/login_window.py
+# MỤC ĐÍCH: Giao diện đăng nhập hệ thống
+# ============================================================
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 from database.user_manager import UserManager
 
 class LoginWindow:
+    """
+    CLASS QUẢN LÝ CỬA SỔ ĐĂNG NHẬP
+    - Xác thực người dùng
+    - Chuyển sang màn hình chính khi đăng nhập thành công
+    - Hỗ trợ đăng ký tài khoản mới
+    """
+    
     def __init__(self, master, main_menu_class, get_db_connection_func):
+        """
+        KHỞI TẠO CỬA SỔ ĐĂNG NHẬP
+        
+        Tham số:
+            master: Cửa sổ Tkinter cha
+            main_menu_class: Class menu chính
+            get_db_connection_func: Hàm lấy kết nối database
+        """
         self.master = master
         self.master.title("🔐 Đăng Nhập Hệ Thống")
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -18,9 +37,8 @@ class LoginWindow:
         self.get_db_connection = get_db_connection_func
         self.main_menu_instance = None
         self.user_manager = UserManager()
-        self.current_user = None  # Lưu thông tin user đã đăng nhập
+        self.current_user = None
         
-        # Biến điều khiển
         self.username_var = tk.StringVar()
         self.password_var = tk.StringVar()
         self.remember_var = tk.BooleanVar(value=False)
@@ -29,6 +47,7 @@ class LoginWindow:
         self.setup_widgets()
     
     def center_window(self, w, h):
+        """CĂNG GIỮA CỬA SỔ TRÊN MÀN HÌNH"""
         ws = self.master.winfo_screenwidth()
         hs = self.master.winfo_screenheight()
         x = (ws // 2) - (w // 2)
@@ -36,6 +55,7 @@ class LoginWindow:
         self.master.geometry(f'{w}x{h}+{x}+{y}')
     
     def setup_styles(self):
+        """CẤU HÌNH GIAO DIỆN"""
         style = ttk.Style()
         style.theme_use("clam")
         style.configure("TLabel", font=('Arial', 11))
@@ -47,6 +67,7 @@ class LoginWindow:
         style.map("Register.TButton", background=[('active', '#1E88E5')])
     
     def setup_widgets(self):
+        """TẠO CÁC WIDGET GIAO DIỆN"""
         main_frame = ttk.Frame(self.master, padding="40 30 40 30")
         main_frame.pack(expand=True, fill='both')
         main_frame.grid_columnconfigure(1, weight=1)
@@ -69,7 +90,7 @@ class LoginWindow:
         password_entry = ttk.Entry(main_frame, textvariable=self.password_var, show='*', width=30)
         password_entry.grid(row=2, column=1, padx=10, pady=12, sticky='ew')
         
-        # Remember me checkbox
+        # Remember checkbox
         remember_frame = ttk.Frame(main_frame)
         remember_frame.grid(row=3, column=0, columnspan=2, pady=10)
         ttk.Checkbutton(remember_frame, text="Ghi nhớ đăng nhập", variable=self.remember_var).pack()
@@ -86,41 +107,40 @@ class LoginWindow:
         ttk.Label(register_frame, text="Chưa có tài khoản?", font=('Arial', 10)).pack(side='left', padx=(0, 10))
         ttk.Button(register_frame, text="📝 Đăng ký ngay", command=self.open_register, style="Register.TButton").pack(side='left')
         
-        # Bind Enter key
         self.master.bind('<Return>', lambda event: self.login())
     
     def open_register(self):
-        """Mở cửa sổ đăng ký"""
+        """MỞ CỬA SỔ ĐĂNG KÝ"""
         register_window = tk.Toplevel(self.master)
         from gui.register_window import RegisterWindow
         RegisterWindow(register_window, self)
     
     def login(self):
-        """Xử lý đăng nhập"""
+        """
+        XỬ LÝ ĐĂNG NHẬP
+        - Kiểm tra input
+        - Xác thực với database
+        - Mở menu chính nếu thành công
+        """
         username = self.username_var.get().strip()
         password = self.password_var.get()
         
-        # Kiểm tra input
         if not username or not password:
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!")
             return
         
-        # Xác thực với database
         success, result = self.user_manager.login(username, password)
         
         if success:
-            self.current_user = result  # Lưu thông tin user
+            self.current_user = result
             
-            # Lấy kết nối database
             db_conn = self.get_db_connection()
             if db_conn is None:
                 messagebox.showerror("Lỗi CSDL", "Không thể kết nối đến cơ sở dữ liệu.")
                 return
             
-            # Ẩn cửa sổ đăng nhập
             self.master.withdraw()
             
-            # Mở menu chính
             if not self.main_menu_instance or not self.main_menu_instance.master.winfo_exists():
                 self.main_window = tk.Toplevel(self.master)
                 self.main_window.protocol("WM_DELETE_WINDOW", self.on_closing_menu)
@@ -128,21 +148,20 @@ class LoginWindow:
                     self.main_window, 
                     self, 
                     db_conn,
-                    self.current_user  # Truyền thông tin user vào menu
+                    self.current_user
                 )
                 self.main_window.deiconify()
             
-            # Hiển thị thông báo chào mừng
             welcome_msg = f"Chào mừng {result['full_name']}!"
             if result['role'] == 'admin':
                 welcome_msg += "\n(Quản trị viên)"
             messagebox.showinfo("Đăng nhập thành công", welcome_msg)
         else:
             messagebox.showerror("Lỗi đăng nhập", result)
-            self.password_var.set("")  # Xóa mật khẩu đã nhập
+            self.password_var.set("")
     
     def on_closing_menu(self):
-        """Xử lý khi đóng menu chính"""
+        """XỬ LÝ KHI ĐÓNG MENU CHÍNH"""
         if messagebox.askyesno("Xác nhận Thoát", "Bạn có muốn thoát chương trình?"):
             if self.main_menu_instance and self.main_menu_instance.db_conn:
                 try:
@@ -152,6 +171,6 @@ class LoginWindow:
             self.master.quit()
     
     def on_closing(self):
-        """Xử lý khi đóng cửa sổ đăng nhập"""
+        """XỬ LÝ KHI ĐÓNG CỬA SỔ ĐĂNG NHẬP"""
         if messagebox.askyesno("Xác nhận Thoát", "Bạn có muốn thoát chương trình?"):
             self.master.quit()

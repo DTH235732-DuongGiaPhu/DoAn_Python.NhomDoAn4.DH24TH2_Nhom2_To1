@@ -1,7 +1,17 @@
-# utils/helpers.py - Các hàm tiện ích NÂNG CẤP
+# ============================================================
+# FILE: utils/helpers.py
+# MỤC ĐÍCH: Các hàm tiện ích dùng chung cho toàn bộ ứng dụng
+# ============================================================
 
 def center_window(window, width, height):
-    """Căn giữa cửa sổ trên màn hình"""
+    """
+    CĂN GIỮA CỬA SỔ TRÊN MÀN HÌNH
+    
+    Tham số:
+        window: Đối tượng cửa sổ Tkinter
+        width: Chiều rộng cửa sổ
+        height: Chiều cao cửa sổ
+    """
     screen_width = window.winfo_screenwidth()
     screen_height = window.winfo_screenheight()
     x = (screen_width - width) // 2
@@ -11,19 +21,13 @@ def center_window(window, width, height):
 
 def format_currency(amount):
     """
-    Format số tiền theo chuẩn Việt Nam
+    FORMAT SỐ TIỀN THEO CHUẨN VIỆT NAM
     
-    Args:
+    Tham số:
         amount: Số tiền (int hoặc float)
     
-    Returns:
-        str: Số tiền đã format (vd: "1,234,567 đ")
-    
-    Examples:
-        >>> format_currency(1234567)
-        '1,234,567 đ'
-        >>> format_currency(0)
-        '0 đ'
+    Trả về:
+        str: Số tiền đã format (vd: "1.234.567 đ")
     """
     try:
         amount = float(amount)
@@ -36,17 +40,13 @@ def format_currency(amount):
 
 def format_number(number):
     """
-    Format số với dấu phân cách hàng nghìn
+    FORMAT SỐ VỚI DẤU PHÂN CÁCH HÀNG NGHÌN
     
-    Args:
+    Tham số:
         number: Số cần format
     
-    Returns:
-        str: Số đã format
-    
-    Examples:
-        >>> format_number(1234567)
-        '1,234,567'
+    Trả về:
+        str: Số đã format (vd: "1,234,567")
     """
     try:
         number = int(number)
@@ -57,20 +57,17 @@ def format_number(number):
 
 def validate_positive_number(value, field_name="Số"):
     """
-    Kiểm tra số dương
+    KIỂM TRA SỐ DƯƠNG HỢP LỆ
     
-    Args:
+    Tham số:
         value: Giá trị cần kiểm tra
         field_name: Tên trường (để hiển thị lỗi)
     
-    Returns:
-        tuple: (is_valid: bool, message: str, parsed_value: float/int)
-    
-    Examples:
-        >>> validate_positive_number("100", "Giá")
-        (True, "", 100.0)
-        >>> validate_positive_number("-10", "Giá")
-        (False, "Giá phải là số dương!", None)
+    Trả về:
+        (is_valid, message, parsed_value): 
+            - is_valid: True/False
+            - message: Thông báo lỗi (nếu có)
+            - parsed_value: Giá trị đã parse (hoặc None)
     """
     try:
         num = float(value)
@@ -83,13 +80,13 @@ def validate_positive_number(value, field_name="Số"):
 
 def validate_year(year_str):
     """
-    Kiểm tra năm hợp lệ
+    KIỂM TRA NĂM HỢP LỆ (1800-2100)
     
-    Args:
+    Tham số:
         year_str: Chuỗi năm
     
-    Returns:
-        tuple: (is_valid: bool, message: str)
+    Trả về:
+        (is_valid, message): True/False và thông báo
     """
     try:
         year = int(year_str)
@@ -102,14 +99,14 @@ def validate_year(year_str):
 
 def validate_not_empty(value, field_name="Trường"):
     """
-    Kiểm tra không để trống
+    KIỂM TRA TRƯỜNG KHÔNG ĐƯỢC ĐỂ TRỐNG
     
-    Args:
+    Tham số:
         value: Giá trị cần kiểm tra
         field_name: Tên trường
     
-    Returns:
-        tuple: (is_valid: bool, message: str)
+    Trả về:
+        (is_valid, message): True/False và thông báo
     """
     if not value or not value.strip():
         return False, f"{field_name} không được để trống!"
@@ -118,21 +115,17 @@ def validate_not_empty(value, field_name="Trường"):
 
 def get_stock_status(quantity):
     """
-    Xác định trạng thái tồn kho
+    XÁC ĐỊNH TRẠNG THÁI TỒN KHO
+    Dựa vào số lượng để phân loại trạng thái
     
-    Args:
-        quantity: Số lượng tồn
+    Tham số:
+        quantity: Số lượng tồn kho
     
-    Returns:
-        tuple: (status: str, color: str, icon: str)
-    
-    Examples:
-        >>> get_stock_status(30)
-        ('Sắp hết', '#F44336', '🔴')
-        >>> get_stock_status(75)
-        ('Cảnh báo', '#FF9800', '🟡')
-        >>> get_stock_status(150)
-        ('Tốt', '#4CAF50', '🟢')
+    Trả về:
+        (status, color, icon): 
+            - status: Trạng thái ("Sắp hết"/"Cảnh báo"/"Tốt")
+            - color: Mã màu hex
+            - icon: Icon emoji
     """
     try:
         qty = int(quantity)
@@ -148,13 +141,14 @@ def get_stock_status(quantity):
 
 def truncate_text(text, max_length=50):
     """
-    Cắt ngắn văn bản
+    CẮT NGẮN VĂN BẢN
+    Thêm "..." nếu vượt quá độ dài
     
-    Args:
+    Tham số:
         text: Văn bản cần cắt
         max_length: Độ dài tối đa
     
-    Returns:
+    Trả về:
         str: Văn bản đã cắt
     """
     if not text:
@@ -167,14 +161,15 @@ def truncate_text(text, max_length=50):
 
 def calculate_profit(gia_mua, gia_ban, so_luong=1):
     """
-    Tính lợi nhuận
+    TÍNH LỢI NHUẬN
+    Công thức: (Giá bán - Giá mua) × Số lượng
     
-    Args:
-        gia_mua: Giá mua
-        gia_ban: Giá bán
-        so_luong: Số lượng
+    Tham số:
+        gia_mua: Giá mua vào
+        gia_ban: Giá bán ra
+        so_luong: Số lượng (mặc định 1)
     
-    Returns:
+    Trả về:
         float: Lợi nhuận
     """
     try:
@@ -185,13 +180,14 @@ def calculate_profit(gia_mua, gia_ban, so_luong=1):
 
 def calculate_profit_margin(gia_mua, gia_ban):
     """
-    Tính tỷ suất lợi nhuận (%)
+    TÍNH TỶ SUẤT LỢI NHUẬN (%)
+    Công thức: ((Giá bán - Giá mua) / Giá mua) × 100
     
-    Args:
-        gia_mua: Giá mua
-        gia_ban: Giá bán
+    Tham số:
+        gia_mua: Giá mua vào
+        gia_ban: Giá bán ra
     
-    Returns:
+    Trả về:
         float: Tỷ suất lợi nhuận (%)
     """
     try:
@@ -206,17 +202,14 @@ def calculate_profit_margin(gia_mua, gia_ban):
 
 def format_phone_number(phone):
     """
-    Format số điện thoại
+    FORMAT SỐ ĐIỆN THOẠI
+    Định dạng: 012-345-6789
     
-    Args:
+    Tham số:
         phone: Số điện thoại
     
-    Returns:
+    Trả về:
         str: Số điện thoại đã format
-    
-    Examples:
-        >>> format_phone_number("0123456789")
-        '012-345-6789'
     """
     phone = str(phone).replace(" ", "").replace("-", "")
     if len(phone) == 10:
@@ -226,12 +219,13 @@ def format_phone_number(phone):
 
 def validate_email(email):
     """
-    Kiểm tra email hợp lệ
+    KIỂM TRA EMAIL HỢP LỆ
+    Sử dụng regex để validate format email
     
-    Args:
+    Tham số:
         email: Địa chỉ email
     
-    Returns:
+    Trả về:
         bool: True nếu hợp lệ
     """
     import re
@@ -241,34 +235,36 @@ def validate_email(email):
 
 def get_color_scheme():
     """
-    Trả về bảng màu chuẩn chuyên nghiệp
+    TRẢ VỀ BẢNG MÀU CHUẨN
+    Định nghĩa các màu dùng chung trong ứng dụng
     
-    Returns:
-        dict: Bảng màu
+    Trả về:
+        dict: Bảng màu với các key như 'primary', 'success', etc.
     """
     return {
-        'primary': '#1976D2',      # Blue
-        'success': '#4CAF50',      # Green
-        'warning': '#FF9800',      # Orange
-        'danger': '#F44336',       # Red
-        'info': '#00BCD4',         # Cyan
-        'light': '#F5F5F5',        # Light Gray
-        'dark': '#212121',         # Dark Gray
-        'white': '#FFFFFF',        # White
-        'border': '#E0E0E0',       # Border Gray
+        'primary': '#1976D2',
+        'success': '#4CAF50',
+        'warning': '#FF9800',
+        'danger': '#F44336',
+        'info': '#00BCD4',
+        'light': '#F5F5F5',
+        'dark': '#212121',
+        'white': '#FFFFFF',
+        'border': '#E0E0E0',
     }
 
 
 def show_loading_message(parent, message="Đang xử lý..."):
     """
-    Hiển thị loading message
+    HIỂN THỊ LOADING MESSAGE
+    Tạo label loading để thông báo đang xử lý
     
-    Args:
+    Tham số:
         parent: Widget cha
         message: Thông báo
     
-    Returns:
-        Label widget (để có thể destroy sau)
+    Trả về:
+        Label: Widget label (để có thể destroy sau)
     """
     import tkinter as tk
     loading = tk.Label(parent,
@@ -283,38 +279,39 @@ def show_loading_message(parent, message="Đang xử lý..."):
 
 def confirm_action(title, message):
     """
-    Hiển thị dialog xác nhận
+    HIỂN THỊ DIALOG XÁC NHẬN
+    Hỏi người dùng Yes/No
     
-    Args:
-        title: Tiêu đề
+    Tham số:
+        title: Tiêu đề dialog
         message: Nội dung
     
-    Returns:
-        bool: True nếu Yes
+    Trả về:
+        bool: True nếu chọn Yes
     """
     from tkinter import messagebox
     return messagebox.askyesno(title, message)
 
 
 def show_success(message):
-    """Hiển thị thông báo thành công"""
+    """HIỂN THỊ THÔNG BÁO THÀNH CÔNG"""
     from tkinter import messagebox
     messagebox.showinfo("Thành công", f"✅ {message}")
 
 
 def show_error(message):
-    """Hiển thị thông báo lỗi"""
+    """HIỂN THỊ THÔNG BÁO LỖI"""
     from tkinter import messagebox
     messagebox.showerror("Lỗi", f"❌ {message}")
 
 
 def show_warning(message):
-    """Hiển thị cảnh báo"""
+    """HIỂN THỊ CẢNH BÁO"""
     from tkinter import messagebox
     messagebox.showwarning("Cảnh báo", f"⚠️ {message}")
 
 
 def show_info(message):
-    """Hiển thị thông tin"""
+    """HIỂN THỊ THÔNG TIN"""
     from tkinter import messagebox
     messagebox.showinfo("Thông tin", f"ℹ️ {message}")

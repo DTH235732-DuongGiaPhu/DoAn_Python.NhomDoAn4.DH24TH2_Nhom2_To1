@@ -1,48 +1,40 @@
-# config.py - Cấu hình hệ thống
+# ============================================================
+# FILE: config.py
+# MỤC ĐÍCH: Cấu hình toàn bộ hệ thống (database, bảo mật, giao diện, nghiệp vụ)
+# ============================================================
 
 # ================================================================
-# CẤU HÌNH DATABASE - SQL SERVER
+# CẤU HÌNH DATABASE
 # ================================================================
-
-# Loại database
-DB_TYPE = "sqlserver"  # sqlserver (không còn dùng sqlite, mysql)
-
-# Cấu hình SQL Server (được quản lý trong connection_manager.py)
-# SERVER_NAME, DATABASE_NAME, DRIVER sẽ được cấu hình trong connection_manager.py
+DB_TYPE = "sqlserver"
 
 # ================================================================
 # CẤU HÌNH BẢO MẬT
 # ================================================================
-
-# Mật khẩu
-PASSWORD_MIN_LENGTH = 6  # Độ dài tối thiểu của mật khẩu
-SALT_LENGTH = 32  # Độ dài salt cho mã hóa mật khẩu (bytes)
-
-# Session timeout (phút)
+PASSWORD_MIN_LENGTH = 6
+SALT_LENGTH = 32
 SESSION_TIMEOUT = 30
 
 # ================================================================
 # CẤU HÌNH GIAO DIỆN
 # ================================================================
+WINDOW_THEME = "clam"
 
-# Theme
-WINDOW_THEME = "clam"  # clam, alt, default, classic
-
-# Colors
+# Bảng màu chuẩn
 COLORS = {
-    'primary': '#1976D2',      # Blue
-    'success': '#4CAF50',      # Green
-    'warning': '#FF9800',      # Orange
-    'danger': '#F44336',       # Red
-    'info': '#00BCD4',         # Cyan
-    'purple': '#9C27B0',       # Purple
-    'light': '#F5F5F5',        # Light Gray
-    'dark': '#212121',         # Dark Gray
-    'white': '#FFFFFF',        # White
-    'border': '#E0E0E0',       # Border Gray
+    'primary': '#1976D2',
+    'success': '#4CAF50',
+    'warning': '#FF9800',
+    'danger': '#F44336',
+    'info': '#00BCD4',
+    'purple': '#9C27B0',
+    'light': '#F5F5F5',
+    'dark': '#212121',
+    'white': '#FFFFFF',
+    'border': '#E0E0E0',
 }
 
-# Font settings
+# Cấu hình font
 FONT_FAMILY = 'Segoe UI'
 FONT_SIZE_SMALL = 9
 FONT_SIZE_NORMAL = 10
@@ -55,15 +47,15 @@ FONT_SIZE_HEADER = 18
 # CẤU HÌNH NGHIỆP VỤ
 # ================================================================
 
-# Kho hàng
-LOW_STOCK_THRESHOLD = 50  # Ngưỡng cảnh báo sắp hết hàng
-CRITICAL_STOCK_THRESHOLD = 20  # Ngưỡng nguy hiểm
+# Ngưỡng cảnh báo kho hàng
+LOW_STOCK_THRESHOLD = 50
+CRITICAL_STOCK_THRESHOLD = 20
 
-# Đơn hàng
+# Trạng thái đơn hàng
 ORDER_STATUSES = ["Đang xử lý", "Hoàn thành", "Đã hủy"]
 DEFAULT_ORDER_STATUS = "Đang xử lý"
 
-# Vị trí kho mặc định
+# Vị trí kho
 DEFAULT_LOCATIONS = [
     "Kệ A1", "Kệ A2", 
     "Kệ B1", "Kệ B2", 
@@ -77,44 +69,30 @@ BOOK_TYPES = ["Sách Nước Ngoài", "Sách Trong Nước"]
 # ================================================================
 # CẤU HÌNH LOGGING & DEBUG
 # ================================================================
-
-# Debug mode
-DEBUG_MODE = True  # Bật/tắt chế độ debug
-
-# Log level
-LOG_LEVEL = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+DEBUG_MODE = True
+LOG_LEVEL = "INFO"
 
 # ================================================================
-# CẤU HÌNH PAGINATION & DISPLAY
+# CẤU HÌNH HIỂN THỊ
 # ================================================================
-
-# Số dòng hiển thị mặc định trong Treeview
 DEFAULT_TREE_HEIGHT = 15
-
-# Số lượng records mỗi trang (cho pagination nếu cần)
 RECORDS_PER_PAGE = 50
 
 # ================================================================
-# CẤU HÌNH APPLICATION
+# THÔNG TIN ỨNG DỤNG
 # ================================================================
-
-# Thông tin ứng dụng
 APP_NAME = "Hệ Thống Quản Lý Sách"
 APP_VERSION = "2.0"
 APP_AUTHOR = "Development Team"
 
-# Window sizes
 WINDOW_MIN_WIDTH = 800
 WINDOW_MIN_HEIGHT = 600
 
 # ================================================================
 # CẤU HÌNH BÁO CÁO & EXPORT
 # ================================================================
-
-# Export formats
 EXPORT_FORMATS = ["Excel", "PDF", "CSV"]
 
-# Report types
 REPORT_TYPES = [
     "Báo cáo tồn kho",
     "Báo cáo doanh thu",
@@ -125,30 +103,15 @@ REPORT_TYPES = [
 # ================================================================
 # CẤU HÌNH EMAIL (TÙY CHỌN - CHO TÍNH NĂNG TƯƠNG LAI)
 # ================================================================
-
-# SMTP settings (nếu cần gửi email)
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USE_TLS = True
-SMTP_USERNAME = ""  # Điền khi cần
-SMTP_PASSWORD = ""  # Điền khi cần
+SMTP_USERNAME = ""
+SMTP_PASSWORD = ""
 
 # ================================================================
 # CẤU HÌNH BACKUP (TÙY CHỌN)
 # ================================================================
-
-# Tự động backup
 AUTO_BACKUP = False
-BACKUP_INTERVAL_DAYS = 7  # Backup mỗi 7 ngày
+BACKUP_INTERVAL_DAYS = 7
 BACKUP_PATH = "./backups/"
-
-# ================================================================
-# GHI CHÚ
-# ================================================================
-"""
-Config này đã được cập nhật để phù hợp với SQL Server database.
-Tất cả các cấu hình kết nối SQL Server được quản lý trong connection_manager.py
-để đảm bảo tính bảo mật và dễ quản lý.
-
-Các module khác sẽ import các hằng số cần thiết từ file này.
-"""

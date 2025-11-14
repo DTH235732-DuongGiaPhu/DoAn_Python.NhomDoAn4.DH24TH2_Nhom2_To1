@@ -1,6 +1,14 @@
+# ============================================================
+# FILE: database/book_database.py
+# MỤC ĐÍCH: Quản lý tất cả thao tác CSDL với SQL Server
+# ============================================================
+
 import time
 from datetime import datetime
 
+# ============================================================
+# CLASS: DatabaseManager:
+# ============================================================
 class DatabaseManager:
     """
     Quản lý dữ liệu sách với SQL SERVER - Phiên bản đã sửa lỗi.
@@ -10,6 +18,7 @@ class DatabaseManager:
     ✅ Xử lý đúng stored procedures
     """
     
+    # KHỞI TẠO
     def __init__(self, conn):
         """Khởi tạo với SQL Server connection"""
         self.conn = conn
@@ -22,6 +31,7 @@ class DatabaseManager:
     # BOOK INFO OPERATIONS
     # ============================================================
     
+    # METHOD: VIEW_ALL
     def view_all(self):
         """Xem tất cả sách từ SQL Server"""
         if not self.cursor:
@@ -73,6 +83,7 @@ class DatabaseManager:
             print(f"❌ Lỗi view_all: {e}")
             return []
     
+    # METHOD: SEARCH_FOR_SUGGESTION
     def search_for_suggestion(self, query):
         """Tìm kiếm sách (autocomplete)"""
         if not self.cursor:
@@ -104,6 +115,7 @@ class DatabaseManager:
             print(f"❌ Lỗi search: {e}")
             return []
     
+    # METHOD: SEARCH_BOOK
     def search_book(self, query):
         """Tìm kiếm sách (đầy đủ thông tin)"""
         if not self.cursor:
@@ -156,6 +168,7 @@ class DatabaseManager:
             print(f"❌ Lỗi search_book: {e}")
             return []
     
+    # METHOD: GET_BOOK_BY_ID
     def get_book_by_id(self, book_id):
         """Lấy thông tin sách theo ID"""
         if not self.cursor:
@@ -194,6 +207,7 @@ class DatabaseManager:
             print(f"❌ Lỗi get_book_by_id: {e}")
             return None
     
+    # METHOD: GET_INVENTORY_STATS
     def get_inventory_stats(self):
         """Thống kê sách"""
         if not self.cursor:
@@ -261,6 +275,7 @@ class DatabaseManager:
             self.conn.rollback()
             return None
     
+    # METHOD: INSERT_BOOK_FULL
     def insert_book_full(self, ma_sach, ten_sach, tac_gia, linh_vuc, loai_sach, nxb, gia_mua, gia_bia, lan_tai_ban, nam_xb):
         """Thêm sách mới vào SQL Server"""
         if not self.cursor:
@@ -306,6 +321,7 @@ class DatabaseManager:
             self.conn.rollback()
             return None
     
+    # METHOD: UPDATE_BOOK_FULL
     def update_book_full(self, book_id, ma_sach, ten_sach, tac_gia, linh_vuc, loai_sach, nxb, gia_mua, gia_bia, lan_tai_ban, nam_xb):
         """Cập nhật thông tin sách"""
         if not self.cursor:
@@ -344,6 +360,7 @@ class DatabaseManager:
             self.conn.rollback()
             return False
     
+    # METHOD: DELETE_BOOK
     def delete_book(self, book_id):
         """Xóa sách (CASCADE delete tồn kho tự động)"""
         if not self.cursor:
@@ -370,6 +387,7 @@ class DatabaseManager:
     # INVENTORY OPERATIONS
     # ============================================================
     
+    # METHOD: VIEW_INVENTORY
     def view_inventory(self):
         """Xem tồn kho"""
         if not self.cursor:
@@ -399,6 +417,7 @@ class DatabaseManager:
             print(f"❌ Lỗi view_inventory: {e}")
             return []
     
+    # METHOD: SEARCH_INVENTORY_FOR_SUGGESTION
     def search_inventory_for_suggestion(self, query):
         """Tìm kiếm trong kho"""
         if not self.cursor:
@@ -427,6 +446,7 @@ class DatabaseManager:
             print(f"❌ Lỗi search_inventory: {e}")
             return []
     
+    # METHOD: ADD_STOCK
     def add_stock(self, book_id, quantity, note=""):
         """Nhập kho sử dụng stored procedure"""
         if not self.cursor:
@@ -467,6 +487,7 @@ class DatabaseManager:
             self.conn.rollback()
             return False
     
+    # METHOD: REMOVE_STOCK
     def remove_stock(self, book_id, quantity, note=""):
         """Xuất kho sử dụng stored procedure"""
         if not self.cursor:
@@ -507,6 +528,7 @@ class DatabaseManager:
             self.conn.rollback()
             return False
     
+    # METHOD: UPDATE_INVENTORY
     def update_inventory(self, book_id, new_quantity, new_location):
         """Cập nhật tồn kho thủ công"""
         if not self.cursor:
@@ -530,6 +552,7 @@ class DatabaseManager:
             self.conn.rollback()
             return False
     
+    # METHOD: UPDATE_INVENTORY_QUANTITY
     def update_inventory_quantity(self, book_id, quantity_change, location, user):
         """
         Cập nhật số lượng tồn kho (dùng cho GUI)
@@ -590,6 +613,7 @@ class DatabaseManager:
             self.conn.rollback()
             return False, str(e)
     
+    # METHOD: GET_TRANSACTIONS
     def get_transactions(self, book_id=None, limit=100):
         """Lấy lịch sử giao dịch"""
         if not self.cursor:
@@ -630,6 +654,7 @@ class DatabaseManager:
     # BUSINESS / ORDER OPERATIONS
     # ============================================================
     
+    # METHOD: GET_ALL_ORDERS
     def get_all_orders(self):
         """Lấy tất cả đơn hàng"""
         if not self.cursor:
@@ -655,6 +680,7 @@ class DatabaseManager:
             print(f"❌ Lỗi get_all_orders: {e}")
             return []
     
+    # METHOD: SEARCH_ORDERS
     def search_orders(self, query):
         """Tìm kiếm đơn hàng"""
         if not self.cursor:
@@ -682,6 +708,7 @@ class DatabaseManager:
             print(f"❌ Lỗi search_orders: {e}")
             return []
     
+    # METHOD: GET_ORDER_DETAILS
     def get_order_details(self, order_id):
         """Lấy chi tiết đơn hàng"""
         if not self.cursor:
@@ -719,6 +746,7 @@ class DatabaseManager:
             print(f"❌ Lỗi get_order_details: {e}")
             return []
     
+    # METHOD: UPDATE_ORDER_STATUS
     def update_order_status(self, order_id, new_status):
         """Cập nhật trạng thái đơn"""
         if not self.cursor:
@@ -742,6 +770,7 @@ class DatabaseManager:
             self.conn.rollback()
             return False
     
+    # METHOD: GET_REVENUE_STATS
     def get_revenue_stats(self):
         """Thống kê doanh thu chi tiết"""
         if not self.cursor:
@@ -789,6 +818,7 @@ class DatabaseManager:
                 'AvgRevenue': 0
             }
     
+    # METHOD: GET_TOP_SELLING_BOOKS
     def get_top_selling_books(self, limit=5):
         """Lấy sách bán chạy nhất"""
         if not self.cursor:
@@ -827,6 +857,7 @@ class DatabaseManager:
             print(f"❌ Lỗi get_top_selling_books: {e}")
             return []
     
+    # METHOD: CREATE_ORDER
     def create_order(self, customer_name, phone, email, address, order_items, created_by="System"):
         """
         Tạo đơn hàng mới
@@ -885,6 +916,7 @@ class DatabaseManager:
             self.conn.rollback()
             return False, str(e)
     
+    # METHOD: GET_ORDER_BY_ID
     def get_order_by_id(self, order_id):
         """Lấy thông tin đơn hàng theo ID"""
         if not self.cursor:
@@ -909,6 +941,7 @@ class DatabaseManager:
             print(f"❌ Lỗi get_order_by_id: {e}")
             return None
     
+    # METHOD: DELETE_ORDER
     def delete_order(self, order_id):
         """Xóa/Hủy đơn hàng"""
         if not self.cursor:
@@ -932,6 +965,7 @@ class DatabaseManager:
             self.conn.rollback()
             return False, str(e)
     
+    # METHOD: UPDATE_ORDER_STATUS
     def update_order_status(self, order_id, new_status):
         """Cập nhật trạng thái đơn hàng"""
         if not self.cursor:
@@ -954,6 +988,7 @@ class DatabaseManager:
             self.conn.rollback()
             return False, str(e)
     
+    # METHOD: GET_ALL_ORDERS
     def get_all_orders(self):
         """Lấy tất cả đơn hàng"""
         if not self.cursor:
@@ -979,6 +1014,7 @@ class DatabaseManager:
             print(f"❌ Lỗi get_all_orders: {e}")
             return []
     
+    # METHOD: FILTER_ORDERS_BY_STATUS
     def filter_orders_by_status(self, status):
         """Lọc đơn hàng theo trạng thái"""
         if not self.cursor:
@@ -1008,6 +1044,7 @@ class DatabaseManager:
             print(f"❌ Lỗi filter_orders_by_status: {e}")
             return []
     
+    # METHOD: SEARCH_ORDERS
     def search_orders(self, query):
         """Tìm kiếm đơn hàng"""
         if not self.cursor:
@@ -1035,6 +1072,7 @@ class DatabaseManager:
             print(f"❌ Lỗi search_orders: {e}")
             return []
     
+    # METHOD: GET_ORDER_DETAILS
     def get_order_details(self, order_id):
         """Lấy chi tiết đơn hàng"""
         if not self.cursor:
@@ -1072,6 +1110,7 @@ class DatabaseManager:
             print(f"❌ Lỗi get_order_details: {e}")
             return []
     
+    # METHOD: GET_REVENUE_STATS
     def get_revenue_stats(self):
         """Thống kê doanh thu chi tiết"""
         if not self.cursor:
@@ -1146,8 +1185,8 @@ class DatabaseManager:
                 'AvgRevenue': 0
             }
 
-
 # Backward compatibility - import từ connection_manager
+    # METHOD: GETDBCONNECTION
 def getDbConnection():
     """Import connection từ connection_manager"""
     try:

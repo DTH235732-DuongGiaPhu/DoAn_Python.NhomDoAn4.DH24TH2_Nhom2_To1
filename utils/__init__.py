@@ -1,4 +1,7 @@
-# utils/__init__.py - Export các hàm từ helpers
+# ============================================================
+# FILE: utils/__init__.py
+# MỤC ĐÍCH: Export các hàm tiện ích từ module helpers
+# ============================================================
 
 from .helpers import (
     center_window,
@@ -20,9 +23,16 @@ from .helpers import (
     show_info
 )
 
-# Hàm validate_number để tương thích ngược với code cũ
 def validate_number(value):
-    """Kiểm tra số hợp lệ (backward compatibility)"""
+    """
+    KIỂM TRA SỐ HỢP LỆ (backward compatibility với code cũ)
+    
+    Tham số:
+        value: Giá trị cần kiểm tra
+    
+    Trả về:
+        bool: True nếu là số hợp lệ
+    """
     try:
         float(value)
         return True

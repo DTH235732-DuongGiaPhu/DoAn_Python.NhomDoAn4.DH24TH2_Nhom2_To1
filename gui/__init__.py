@@ -1,4 +1,7 @@
-# gui/__init__.py - Export các class từ GUI modules
+# ============================================================
+# FILE: gui/__init__.py
+# MỤC ĐÍCH: Export các class GUI chính từ module gui
+# ============================================================
 
 from .login_window import LoginWindow
 from .register_window import RegisterWindow

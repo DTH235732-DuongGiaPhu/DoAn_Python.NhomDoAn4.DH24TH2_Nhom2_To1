@@ -1,10 +1,14 @@
-# database/user_manager.py - Quản lý người dùng với SQL Server
+#=============================================================
+# FILE: database/user_manager.py
+# MỤC ĐÍCH: Quản lý người dùng (đăng ký, đăng nhập, xác thực)
+# ============================================================
+
 import hashlib
 import os
 import sys
 from pathlib import Path
 
-# Thêm thư mục gốc vào sys.path để import connection_manager
+# Thêm đường dẫn để import connection_manager
 root_dir = Path(__file__).parent.parent
 if str(root_dir) not in sys.path:
     sys.path.insert(0, str(root_dir))
@@ -13,19 +17,18 @@ from connection_manager import getDbConnection
 
 class UserManager:
     """
-    Quản lý người dùng với SQL Server Database
-    
-    ✅ Tích hợp hoàn toàn với SQL Server
-    ✅ Sử dụng connection_manager để kết nối
-    ✅ Tương thích với hệ thống đăng nhập hiện tại
+    CLASS QUẢN LÝ NGƯỜI DÙNG
+    - Đăng ký tài khoản mới
+    - Đăng nhập và xác thực
+    - Đổi mật khẩu
+    - Quản lý trạng thái tài khoản (khóa/mở khóa)
     """
     
     def __init__(self):
-        """Khởi tạo UserManager với SQL Server connection"""
+        """Khởi tạo UserManager và kiểm tra kết nối database"""
         self.PASSWORD_MIN_LENGTH = 6
         self.SALT_LENGTH = 32
         
-        # Kiểm tra kết nối database
         conn = self.get_connection()
         if conn:
             print("✅ UserManager: Kết nối SQL Server thành công")
@@ -34,7 +37,7 @@ class UserManager:
             print("⚠️  UserManager: Không thể kết nối SQL Server")
     
     def get_connection(self):
-        """Lấy connection từ connection_manager"""
+        """Lấy kết nối database từ connection_manager"""
         try:
             return getDbConnection()
         except Exception as e:
@@ -43,41 +46,41 @@ class UserManager:
     
     def hash_password(self, password, salt=None):
         """
-        Mã hóa mật khẩu với salt
+        MÃ HÓA MẬT KHẨU
+        Sử dụng SHA-256 với salt để bảo mật
         
-        Args:
-            password: Mật khẩu cần mã hóa
-            salt: Salt (nếu None sẽ tạo mới)
+        Tham số:
+            password: Mật khẩu gốc
+            salt: Chuỗi salt (tự động tạo nếu None)
         
-        Returns:
-            tuple: (password_hash, salt)
+        Trả về:
+            (password_hash, salt): Hash và salt đã mã hóa
         """
         if salt is None:
             salt = os.urandom(self.SALT_LENGTH).hex()
         
-        # Sử dụng SHA-256 để hash
         password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
         return password_hash, salt
     
     def register_user(self, username, password, full_name="", email="", role="user"):
         """
-        Đăng ký người dùng mới vào SQL Server
+        ĐĂNG KÝ TÀI KHOẢN MỚI
         
-        Args:
+        Tham số:
             username: Tên đăng nhập
             password: Mật khẩu
             full_name: Họ tên đầy đủ
             email: Email
             role: Vai trò (user/admin)
         
-        Returns:
-            tuple: (success: bool, message: str)
+        Trả về:
+            (success, message): True/False và thông báo
         """
         # Kiểm tra độ dài mật khẩu
         if len(password) < self.PASSWORD_MIN_LENGTH:
             return False, f"Mật khẩu phải có ít nhất {self.PASSWORD_MIN_LENGTH} ký tự"
         
-        # Kiểm tra username trống
+        # Kiểm tra username không rỗng
         if not username or not username.strip():
             return False, "Tên đăng nhập không được để trống"
         
@@ -88,7 +91,7 @@ class UserManager:
         try:
             cursor = conn.cursor()
             
-            # Kiểm tra username đã tồn tại chưa
+            # Kiểm tra username đã tồn tại
             cursor.execute("SELECT Id FROM Users WHERE Username = ?", (username,))
             if cursor.fetchone():
                 return False, "Tên đăng nhập đã tồn tại"
@@ -96,7 +99,7 @@ class UserManager:
             # Mã hóa mật khẩu
             password_hash, salt = self.hash_password(password)
             
-            # Thêm user vào database bằng Stored Procedure
+            # Tạo user mới qua Stored Procedure
             cursor.execute("""
                 EXEC sp_CreateUser 
                     @Username = ?, 
@@ -107,10 +110,9 @@ class UserManager:
                     @Role = ?
             """, (username, password_hash, salt, full_name if full_name else username, email, role))
             
-            # Lấy kết quả
             result = cursor.fetchone()
             
-            if result and result[0] == 1:  # Success = 1
+            if result and result[0] == 1:
                 conn.commit()
                 print(f"✅ Đã đăng ký user: {username}")
                 return True, "Đăng ký thành công"
@@ -128,14 +130,17 @@ class UserManager:
     
     def login(self, username, password):
         """
-        Đăng nhập - xác thực người dùng với SQL Server
+        ĐĂNG NHẬP HỆ THỐNG
+        Xác thực thông tin đăng nhập và trả về thông tin user
         
-        Args:
+        Tham số:
             username: Tên đăng nhập
             password: Mật khẩu
         
-        Returns:
-            tuple: (success: bool, result: dict hoặc error_message: str)
+        Trả về:
+            (success, result): 
+                - success=True: result là dict chứa thông tin user
+                - success=False: result là thông báo lỗi
         """
         conn = self.get_connection()
         if not conn:
@@ -144,14 +149,14 @@ class UserManager:
         try:
             cursor = conn.cursor()
             
-            # Lấy thông tin user bằng Stored Procedure
+            # Lấy thông tin user từ database
             cursor.execute("EXEC sp_GetUserByUsername @Username = ?", (username,))
             result = cursor.fetchone()
             
             if result is None:
                 return False, "Tên đăng nhập không tồn tại"
             
-            # Parse result
+            # Parse kết quả
             user_id = result[0]
             stored_username = result[1]
             stored_hash = result[2]
@@ -163,11 +168,11 @@ class UserManager:
             last_login = result[8]
             is_active = result[9]
             
-            # Kiểm tra tài khoản có active không
+            # Kiểm tra tài khoản có bị khóa
             if not is_active:
                 return False, "Tài khoản đã bị khóa"
             
-            # Kiểm tra mật khẩu
+            # Xác thực mật khẩu
             password_hash, _ = self.hash_password(password, salt)
             
             if password_hash == stored_hash:
@@ -200,12 +205,12 @@ class UserManager:
     
     def check_username_exists(self, username):
         """
-        Kiểm tra username đã tồn tại chưa
+        KIỂM TRA USERNAME ĐÃ TỒN TẠI
         
-        Args:
+        Tham số:
             username: Tên đăng nhập cần kiểm tra
         
-        Returns:
+        Trả về:
             bool: True nếu đã tồn tại
         """
         conn = self.get_connection()
@@ -228,22 +233,22 @@ class UserManager:
     
     def change_password(self, username, old_password, new_password):
         """
-        Đổi mật khẩu
+        ĐỔI MẬT KHẨU
         
-        Args:
+        Tham số:
             username: Tên đăng nhập
             old_password: Mật khẩu cũ
             new_password: Mật khẩu mới
         
-        Returns:
-            tuple: (success: bool, message: str)
+        Trả về:
+            (success, message): True/False và thông báo
         """
         # Xác thực mật khẩu cũ
         success, result = self.login(username, old_password)
         if not success:
             return False, "Mật khẩu cũ không đúng"
         
-        # Kiểm tra mật khẩu mới
+        # Kiểm tra độ dài mật khẩu mới
         if len(new_password) < self.PASSWORD_MIN_LENGTH:
             return False, f"Mật khẩu mới phải có ít nhất {self.PASSWORD_MIN_LENGTH} ký tự"
         
@@ -254,10 +259,10 @@ class UserManager:
         try:
             cursor = conn.cursor()
             
-            # Tạo hash mới cho mật khẩu mới
+            # Tạo hash mới
             password_hash, salt = self.hash_password(new_password)
             
-            # Cập nhật mật khẩu
+            # Cập nhật mật khẩu trong database
             cursor.execute("""
                 UPDATE Users 
                 SET PasswordHash = ?, Salt = ?
@@ -278,9 +283,9 @@ class UserManager:
     
     def get_all_users(self):
         """
-        Lấy danh sách tất cả users (cho admin)
+        LẤY DANH SÁCH TẤT CẢ USER (CHO ADMIN)
         
-        Returns:
+        Trả về:
             list: Danh sách users
         """
         conn = self.get_connection()
@@ -311,13 +316,13 @@ class UserManager:
     
     def deactivate_user(self, user_id):
         """
-        Vô hiệu hóa tài khoản user
+        KHÓA TÀI KHOẢN USER
         
-        Args:
+        Tham số:
             user_id: ID của user
         
-        Returns:
-            tuple: (success: bool, message: str)
+        Trả về:
+            (success, message): True/False và thông báo
         """
         conn = self.get_connection()
         if not conn:
@@ -340,13 +345,13 @@ class UserManager:
     
     def activate_user(self, user_id):
         """
-        Kích hoạt lại tài khoản user
+        MỞ KHÓA TÀI KHOẢN USER
         
-        Args:
+        Tham số:
             user_id: ID của user
         
-        Returns:
-            tuple: (success: bool, message: str)
+        Trả về:
+            (success, message): True/False và thông báo
         """
         conn = self.get_connection()
         if not conn:
