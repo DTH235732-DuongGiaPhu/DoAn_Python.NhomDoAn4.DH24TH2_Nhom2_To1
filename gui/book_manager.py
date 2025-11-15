@@ -77,7 +77,7 @@ class BookManagerApp:
         control_frame.grid_rowconfigure(0, weight=0)
         control_frame.grid_rowconfigure(1, weight=1)
         main_pane.add(control_frame, weight=0)
-        # --- KHU VỰC 1: NHẬP LIỆU (Giữ nguyên) ---
+        # --- KHU VỰC 1: NHẬP LIỆU ---
         input_group = ttk.LabelFrame(control_frame, text=" CHI TIẾT SÁCH ", padding="15")
         input_group.grid(row=0, column=0, sticky=N+E+S+W, padx=(0, 10), pady=(0, 5))
         input_group.grid_columnconfigure(1, weight=1)
@@ -100,7 +100,7 @@ class BookManagerApp:
                 ttk.Combobox(input_group, textvariable=var, values=self.BOOK_TYPES, state="readonly", width=30).grid(row=row, column=col+1, padx=(0, 10), pady=5, sticky='ew')
             else:
                 ttk.Entry(input_group, textvariable=var, width=35).grid(row=row, column=col+1, padx=(0, 10), pady=5, sticky='ew')
-        # --- KHU VỰC 2: BUTTONS (Giữ nguyên) ---
+        # --- KHU VỰC 2: BUTTONS ---
         button_group = ttk.Frame(control_frame, padding="10")
         button_group.grid(row=0, column=1, rowspan=2, sticky=N+S, padx=(10, 0))
         button_group.grid_columnconfigure(0, weight=1)
@@ -220,7 +220,7 @@ class BookManagerApp:
         # values: (Id, MaSach, TenSach, TenTacGia, TenLinhVuc, LoaiSach, TenNXB, GiaMua, GiaBia, LanTaiBan, NamXB)
         self.fill_form_with_data(values)
     
-    # --- START CHANGE (CHỈNH SỬA BOOKMANAGER) ---
+    # --- START CHANGE ---
     def view_command(self):
         # Tải lại danh sách sách từ DB và cập nhật thông tin tổng quan
         try:
@@ -277,7 +277,7 @@ class BookManagerApp:
         try:
             new_id = self.db.insert_book_full(*values)
             self.view_command()
-            # Cố gắng chọn sách vừa thêm (Nếu muốn)
+            
             # self.fill_form_with_data(self.db.get_book_by_id(new_id))
             messagebox.showinfo("Thành công", f"Đã thêm sách: {values[1]}")
         except Exception as e:

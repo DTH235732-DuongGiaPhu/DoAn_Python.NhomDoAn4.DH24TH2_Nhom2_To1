@@ -145,7 +145,7 @@ class MainMenuWindow:
         self.master.deiconify()
     
     def logout_to_login(self):
-        """Đăng xuất và quay lại màn hình đăng nhập"""
+        """ Đăng xuất và quay lại màn hình đăng nhập """
         if messagebox.askyesno("Xác nhận", "Bạn có muốn đăng xuất?"):
             if self.book_manager_instance and self.book_manager_instance.master.winfo_exists():
                 self.book_manager_instance.master.destroy()

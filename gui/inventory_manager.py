@@ -4,7 +4,7 @@ from database.book_database import DatabaseManager
 from utils.helpers import center_window, format_currency
 
 class InventoryManagerApp:
-    """Ứng dụng quản lý kho sách - Phiên bản ổn định"""
+    """ Ứng dụng quản lý kho sách """
     
     def __init__(self, master, main_menu_instance, db_conn):
         self.db = DatabaseManager(db_conn)
