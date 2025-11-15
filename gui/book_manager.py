@@ -111,7 +111,7 @@ class BookManagerApp:
             ("❌ XÓA SÁCH", self.delete_command, "Delete.Unified.TButton"),
             ("---", None, "TSeparator"),
             ("🔍 TÌM KIẾM", self.search_command, "Search.Unified.TButton"),
-            ("🔄 TẢI LẠI", self.view_command, "View.Unified.TButton"), # Tên nút đã đổi ở lần trước
+            ("🔄 TẢI LẠI", self.view_command, "View.Unified.TButton"), 
             ("🧹 XÓA FORM", self.clear_form, "Clear.Unified.TButton"),
             ("---", None, "TSeparator"),
             ("⬅️ QUAY LẠI MENU", self.main_menu.close_book_manager, "Logout.Unified.TButton")
