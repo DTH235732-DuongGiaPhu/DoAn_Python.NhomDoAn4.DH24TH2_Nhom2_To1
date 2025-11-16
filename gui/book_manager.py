@@ -34,7 +34,8 @@ class BookManagerApp:
     def apply_styles(self):
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("Treeview.Heading", font=('Arial', 11, 'bold'), background="#2196F3", foreground="white", padding=[5, 5])
+        style.configure("Treeview.Heading", font=('Arial', 11, 'bold'), background="#2196F3", foreground="white", 
+                         padding=[5, 5])
         style.configure("Treeview",
             font=('Arial', 10),
             rowheight=25,
@@ -95,11 +96,14 @@ class BookManagerApp:
             ("NĂM XB:", self.publish_year_text, 4, 2)
         ]
         for text, var, row, col, *is_combo in input_data:
-            ttk.Label(input_group, text=text, style="Input.TLabel").grid(row=row, column=col, sticky=W, padx=10, pady=5)
+            ttk.Label(input_group, text=text, style="Input.TLabel").grid(row=row, column=col, sticky=W, 
+                                                                         padx=10, pady=5)
             if is_combo and is_combo[0]:
-                ttk.Combobox(input_group, textvariable=var, values=self.BOOK_TYPES, state="readonly", width=30).grid(row=row, column=col+1, padx=(0, 10), pady=5, sticky='ew')
+                ttk.Combobox(input_group, textvariable=var, values=self.BOOK_TYPES, state="readonly",
+                             width=30).grid(row=row, column=col+1, padx=(0, 10), pady=5, sticky='ew')
             else:
-                ttk.Entry(input_group, textvariable=var, width=35).grid(row=row, column=col+1, padx=(0, 10), pady=5, sticky='ew')
+                ttk.Entry(input_group, textvariable=var, width=35).grid(row=row, column=col+1,  
+                                                                        padx=(0, 10), pady=5, sticky='ew')
         # --- KHU VỰC 2: BUTTONS ---
         button_group = ttk.Frame(control_frame, padding="10")
         button_group.grid(row=0, column=1, rowspan=2, sticky=N+S, padx=(10, 0))
@@ -122,22 +126,28 @@ class BookManagerApp:
             if text == "---":
                 ttk.Separator(button_group, orient='horizontal').grid(row=row_index, column=0, sticky='ew', pady=10)
             else:
-                ttk.Button(button_group, text=text, command=command, style=style_name).grid(row=row_index, column=0, padx=5, pady=4, sticky='ew')
+                ttk.Button(button_group, text=text, command=command, style=style_name).grid(row=row_index, column=0, 
+                                                                                            padx=5, pady=4, sticky='ew')
             row_index += 1
         # --- KHU VỰC 3: THÔNG TIN TỔNG QUAN (Giữ nguyên) ---
         info_group = ttk.LabelFrame(control_frame, text=" THÔNG TIN TỔNG QUAN ", padding="15")
         info_group.grid(row=1, column=0, sticky=N+E+S+W, padx=(0, 10), pady=(5, 0))
         info_group.columnconfigure(1, weight=1)
-        ttk.Label(info_group, text="Tổng số đầu sách:", style="Input.TLabel").grid(row=0, column=0, sticky=W, padx=10, pady=5)
-        ttk.Label(info_group, textvariable=self.total_books_var, font=('Arial', 12, 'bold'), foreground="#F44336").grid(row=0, column=1, sticky=W, padx=10, pady=5)
-        ttk.Label(info_group, textvariable=self.status_var, font=('Arial', 9), foreground="#666666").grid(row=1, column=0, columnspan=2, sticky=W, padx=10, pady=(5, 0))
+        ttk.Label(info_group, text="Tổng số đầu sách:", style="Input.TLabel").grid(row=0, column=0, sticky=W, 
+                                                                                   padx=10, pady=5)
+        ttk.Label(info_group, textvariable=self.total_books_var, font=('Arial', 12, 'bold'), 
+                  foreground="#F44336").grid(row=0, column=1, sticky=W, padx=10, pady=5)
+        ttk.Label(info_group, textvariable=self.status_var, font=('Arial', 9), 
+                  foreground="#666666").grid(row=1, column=0, columnspan=2, sticky=W, padx=10, pady=(5, 0))
         # 1B. Khu vực Bảng hiển thị (Treeview)
         list_frame = ttk.Frame(main_pane, padding="10")
         list_frame.grid_rowconfigure(0, weight=1)
         list_frame.grid_columnconfigure(0, weight=1)
         main_pane.add(list_frame, weight=1)
-        # CỘT CSDL trả về: (Id, MaSach, TenSach, TenTacGia, TenLinhVuc, LoaiSach, TenNXB, GiaMua, GiaBia, LanTaiBan, NamXB)
-        all_column_ids = ["ID", "MaSach", "TenSach", "TenTacGia", "TenLinhVuc", "LoaiSach", "TenNXB", "GiaMua", "GiaBia", "LanTaiBan", "NamXB"]
+        # CỘT CSDL trả về: (Id, MaSach, TenSach, TenTacGia, TenLinhVuc, LoaiSach, TenNXB, GiaMua, GiaBia, LanTaiBan, 
+        # NamXB)
+        all_column_ids = ["ID", "MaSach", "TenSach", "TenTacGia", "TenLinhVuc", "LoaiSach", "TenNXB", "GiaMua", 
+                          "GiaBia", "LanTaiBan", "NamXB"]
         self.books_list = ttk.Treeview(list_frame, columns=all_column_ids, show='headings', style="Treeview")
 
         # Cấu hình cột

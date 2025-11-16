@@ -276,7 +276,8 @@ class DatabaseManager:
             return None
     
     # METHOD: INSERT_BOOK_FULL
-    def insert_book_full(self, ma_sach, ten_sach, tac_gia, linh_vuc, loai_sach, nxb, gia_mua, gia_bia, lan_tai_ban, nam_xb):
+    def insert_book_full(self, ma_sach, ten_sach, tac_gia, linh_vuc, loai_sach, nxb, gia_mua, gia_bia, lan_tai_ban,
+                         nam_xb):
         """Thêm sách mới vào SQL Server"""
         if not self.cursor:
             print("❌ Không có kết nối database!")
@@ -322,7 +323,8 @@ class DatabaseManager:
             return None
     
     # METHOD: UPDATE_BOOK_FULL
-    def update_book_full(self, book_id, ma_sach, ten_sach, tac_gia, linh_vuc, loai_sach, nxb, gia_mua, gia_bia, lan_tai_ban, nam_xb):
+    def update_book_full(self, book_id, ma_sach, ten_sach, tac_gia, linh_vuc, loai_sach, nxb, gia_mua, gia_bia, 
+                         lan_tai_ban, nam_xb):
         """Cập nhật thông tin sách"""
         if not self.cursor:
             print("❌ Không có kết nối database!")
@@ -889,14 +891,15 @@ class DatabaseManager:
             
             # ✅ SỬA: Dùng created_by thay vì hardcode 'System'
             self.cursor.execute("""
-                INSERT INTO DonHang (MaDonHang, TenKhachHang, SoDienThoai, Email, DiaChi, NgayDat, TongTien, TrangThai, NguoiTao)
+                INSERT INTO DonHang (MaDonHang, TenKhachHang, SoDienThoai, Email, DiaChi, NgayDat, TongTien, 
+                                     TrangThai, NguoiTao)
                 VALUES (?, ?, ?, ?, ?, ?, ?, N'Đang xử lý', ?)
             """, (order_code, customer_name, phone, email, address, datetime.date.today(), total_amount, created_by))
             
             # Lấy ID đơn hàng vừa tạo
             self.cursor.execute("SELECT @@IDENTITY")
             order_id = int(self.cursor.fetchone()[0])
-            
+             
             # Insert chi tiết đơn hàng
             for book_id, quantity, unit_price in order_items:
                 subtotal = quantity * unit_price
