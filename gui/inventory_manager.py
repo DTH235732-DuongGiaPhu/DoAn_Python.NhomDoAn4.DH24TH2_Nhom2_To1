@@ -10,7 +10,7 @@ class InventoryManagerApp:
         self.db = DatabaseManager(db_conn)
         self.master = master
         self.main_menu = main_menu_instance
-        master.title("📦 HỆ THỐNG QUẢN LÝ KHO SÁCH - PRO VERSION")
+        master.title("📦 HỆ THỐNG QUẢN LÝ KHO SÁCH ")
         
         # Biến điều khiển
         self.selected_inventory_record = None
